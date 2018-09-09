@@ -2,7 +2,8 @@
 #Author: Logan Fink
 #Usage: script to type bacteria and characterize AMR
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 07/19/18 - CJK
+#Last revised 08/03/18 - Curtis Kapsak
+## change made - removed the "--readids" flag from the fastq-dump command. Prior to the fix it was causing reads to be named XXX.1 and XXX.2 causing BWA to crash due to paired reads having non-identical read identifiers in the first line of the fastq
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
@@ -69,7 +70,7 @@ for i in ${id[@]}; do
             echo 'prefetching '$i'...'
             prefetch $i
             echo 'Creating read files for '$i'...'
-            fastq-dump --gzip --skip-technical --readids --dumpbase --split-files --clip $i
+            fastq-dump --gzip --skip-technical --dumpbase --split-files --clip $i
         fi
     fi
 done
@@ -84,7 +85,7 @@ for i in *R1_001.fastq.gz; do
     else
         run_assembly_shuffleReads.pl ${b}"_R1_001.fastq.gz" ${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
-        run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
+        run_assembly_trimClean.pl -o clean/${b}.cleaned.fastq.gz -i clean/${b}.fastq --nosingletons;
         remove_file clean/${b}.fastq;
     fi
 done
