@@ -1,9 +1,8 @@
 #!/bin/bash
-#Author: Logan Fink
+#Authors: Logan Fink, Curtis Kapsak
 #Usage: script to type bacteria and characterize AMR
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 08/03/18 - Curtis Kapsak
-## change made - removed the "--readids" flag from the fastq-dump command. Prior to the fix it was causing reads to be named XXX.1 and XXX.2 causing BWA to crash due to paired reads having non-identical read identifiers in the first line of the fastq
+#Last revised 09/08/18 - LDF
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
@@ -167,7 +166,7 @@ done
 make_directory mash
 echo "Mashing files now! MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH MASH "
 for i in ${id[@]}; do
-    if [[ -n "$(find -path ./mash/${i}_distance.tab 2>/dev/null)" ]]; then 
+    if [[ -n "$(find -path ./mash/${i}_distance.tab 2>/dev/null)" ]]; then
         echo "Skipping "$i". It has already been monster MASHed."
     else
         echo ${i}
@@ -215,9 +214,10 @@ for i in $ecoli_isolates; do
     echo ${i}';' $ecoli_serotype >> ./serotypeFinder_output/serotype_results
 done
 
-##### SeqSero, if mash pointed to a salmonella species, this will tell us the serotype details #####
+##### SeqSero, and SISTR, if mash pointed to a salmonella species, this will tell us the serotype details #####
 sal_isolates="$(awk -F ';' '$2 ~ /Salmonella/' ./mash/sample_id/raw.csv | awk -F ';' '{print$1}')"
 make_directory SeqSero_output
+make_directory sistr
 echo "Salmonella "$sal_isolates
 oddity="See comments below*"
 remove_file ./SeqSero_output/all_serotype_results
@@ -243,9 +243,14 @@ for i in $sal_isolates; do
     echo ${i} >> ./SeqSero_output/all_serotype_results
     head -10 ./SeqSero_output/${i}/Seqsero_result.txt >> ./SeqSero_output/all_serotype_results
     echo >> ./SeqSero_output/all_serotype_results
+    if [[ -n "$(find -path ./sister/${i}_sistr-results)" ]]; then
+        continue
+    else
+        sistr -i ./spades_assembly_trim/$i/contigs.fasta ${i} -f tab -o sistr/${i}_sistr-results
+    fi
 done
 
-#This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
+#####This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
 echo 'Setting abricate db PATH'
 abricate_db_path=$(find /home/$USER/ -mount -path "*/abricate/db")
 echo 'ABRICATE DB PATH SET'
@@ -264,6 +269,37 @@ for y in ${databases[@]}; do
     abricate --summary ./abricate/*_${y}.tab > ./abricate/summary/${y}_summary
 done
 echo 'FINISHED RUNNING ABRICATE'
+
+#####Create a file with all the relevant run info
+rm isolate_info_file
+qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
+echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file
+for i in ${id[@]}; do
+    qc_metric=$(grep "${i}" ./clean/readMetrics.tsv)
+    contigs=$(tail -9 ./quast/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
+    largest_contig=$(tail -9 ./quast/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
+    total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
+    N50=$(tail -9 ./quast/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
+    L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+    if [ -z "$contigs" ]; then
+         contigs="N/A"
+    fi
+    if [ -z "$largest_contig" ]; then
+         largest_contig="N/A"
+    fi
+    if [ -z "$total_length" ]; then
+         total_length="N/A"
+    fi
+    if [ -z "$N50" ]; then
+         N50="N/A"
+    fi
+    if [ -z "$L50" ]; then
+         L50="N/A"
+    fi
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+done
+
 #### Remove the tmp1 file that lingers #####
 remove_file tmp1
 
