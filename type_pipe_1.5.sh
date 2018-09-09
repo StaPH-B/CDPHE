@@ -2,7 +2,7 @@
 #Author: Logan Fink
 #Usage: script to type bacteria and characterize AMR
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 07/18/18
+#Last revised 07/19/18 - CJK
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
@@ -105,7 +105,10 @@ remove_file ./clean/\**
 #Mini kraken is used here, since it takes up less space.  If results are inconclusive, can run kraken with the larger database
 #praise cthulhu.
 make_directory kraken_output
-KRAKEN_DB=/home/staphb/databases/kraken/minikraken_CURRENT
+echo 'SETTING KRAKEN DATABASE PATH'
+KRAKEN_DB=$(find /home/$USER/ -mount -path "*/kraken/minikraken_CURRENT")
+echo 'KRAKEN DATABASE PATH SET TO:' $KRAKEN_DB
+echo $KRAKEN_DB
 remove_file kraken_output/top_kraken_species_results
 for i in ${id[@]}; do
     if [[ -n "$(find . -path ./kraken_output/${i}/kraken_species.results 2>/dev/null)" ]]; then
@@ -122,8 +125,14 @@ for i in ${id[@]}; do
 done
 
 ##### Run Quality and Coverage Metrics #####
+## check to see if the run quality and coverage metrics have already been completed or not
 for i in ${id[@]}; do
-    run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
+    if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then 
+		echo 'Run quality and coverage metrics have been generated'
+	else
+		echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
+		run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
+	fi
 done
 
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
@@ -180,7 +189,7 @@ for i in ${id[@]}; do
 done
 
 # database of H and O type genes
-database="/home/staphb/software/serotypefinder/database/"
+database="$(find /home/$USER/ -mount -path "*/serotypefinder/database")"
 # serotypeFinder requires legacy blast
 blast="/opt/blast-2.2.26/"
 
@@ -236,9 +245,12 @@ for i in $sal_isolates; do
 done
 
 #This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
+echo 'Setting abricate db PATH'
+abricate_db_path=$(find /home/$USER/ -mount -path "*/abricate/db")
+echo 'ABRICATE DB PATH SET'
 declare -a databases=()
-for i in /home/staphb/software/abricate/db/*;
-    do b=`basename $i /home/staphb/software/abricate/db/`;
+for i in $abricate_db_path/*;
+    do b=`basename $i $abricate_db_path/`;
     databases+=("$b");
 done
 echo ${databases[@]}
@@ -250,7 +262,7 @@ for y in ${databases[@]}; do
     done
     abricate --summary ./abricate/*_${y}.tab > ./abricate/summary/${y}_summary
 done
-
+echo 'FINISHED RUNNING ABRICATE'
 #### Remove the tmp1 file that lingers #####
 remove_file tmp1
 
