@@ -58,7 +58,6 @@ id=("${tmp[@]}" "${srr[@]}") #Combine the automatically generated list with the 
 id=($(printf "%s\n" "${id[@]}"|sort -u)) #Get all unique values and output them to an array
 echo ${id[@]}
 remove_file tmp
-remove_file tmp1
 
 ##### Fetch and fastq-dump all reads from NCBI identified by "SRR" #####
 for i in ${id[@]}; do
@@ -122,6 +121,11 @@ for i in ${id[@]}; do
     fi
 done
 
+##### Run Quality and Coverage Metrics #####
+for i in ${id[@]}; do
+    run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
+done
+
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
 make_directory ./spades_assembly_trim
 for i in ${id[@]}; do
@@ -148,11 +152,6 @@ for i in ${id[@]}; do
     tail -n +10 ./quast/$i/report.txt | grep "contigs" >> quast/${i}_output_file
     tail -n +10 ./quast/$i/report.txt | grep "N50" >> quast/${i}_output_file
     #May need to add in some files which explain the limits for different organisms, eg acceptable lengths of genome for e coli, acceptable N50 values, etc.....
-done
-
-##### Run Quality and Coverage Metrics #####
-for i in ${id[@]}; do
-    run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
 done
 
 make_directory mash
@@ -251,6 +250,9 @@ for y in ${databases[@]}; do
     done
     abricate --summary ./abricate/*_${y}.tab > ./abricate/summary/${y}_summary
 done
+
+#### Remove the tmp1 file that lingers #####
+remove_file tmp1
 
 ##### Move all of the fastq.gz files into a folder #####
 make_directory fastq_files
