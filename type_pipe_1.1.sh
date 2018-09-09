@@ -2,7 +2,7 @@
 #Author: Logan Fink
 #Usage: script to type bacteria and characterize AMR
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 1/11/2018
+#Last revised 02/15/18
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
@@ -36,20 +36,25 @@ make_directory () {
         fi;
     fi
 }
+##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
+if [[ -n "$(find ./fastq_files)" ]]; then
+    mv ./fastq_files/* .
+    rm -rf ./fastq_files
+fi
 
 declare -a srr=() #PASTE IN ANY SRR NUMBERS INTO FILE named: SRR
 while IFS= read -r line; do
     srr+=("$line")
 done < ./SRR
-#find . -maxdepth 1 -name "*fastq*" |cut -d '-' -f 1|cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '-' and '_')
-find . -maxdepth 1 -name "*fastq*" |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '_')
+#find . -maxdepth 1 -name '*fastq*' |cut -d '-' -f 1|cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '-' and '_')
+find . -maxdepth 1 -name '*fastq*' |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '_')
 declare -a tmp=()
 tmp1='tmp1'
 tmpfile=`cat $tmp1`
 for line in $tmpfile; do
     tmp=("${tmp[@]}" "$line");
 done
-id=("${id[@]}" "${srr[@]}") #Combine the automatically generated list with the SRR list
+id=("${tmp[@]}" "${srr[@]}") #Combine the automatically generated list with the SRR list
 id=($(printf "%s\n" "${id[@]}"|sort -u)) #Get all unique values and output them to an array
 echo ${id[@]}
 remove_file tmp
@@ -75,7 +80,7 @@ make_directory clean
 echo "cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning"
 for i in *R1_001.fastq.gz; do
     b=`basename ${i} _R1_001.fastq.gz`;
-    if [[ -n "$(find . -maxdepth 2 -name ${b}.cleaned.fastq.gz)" ]]; then
+    if [[ -n "$(find -path ./clean/${b}.cleaned.fastq.gz)" ]]; then
         continue
     else
         run_assembly_shuffleReads.pl ${b}"_R1_001.fastq.gz" ${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
@@ -84,10 +89,9 @@ for i in *R1_001.fastq.gz; do
         remove_file clean/${b}.fastq;
     fi
 done
-remove_file ./clean/\*R1_001.fastq.gz.cleaned.fastq.gz
 for i in *_1.fastq.gz; do
     b=`basename ${i} _1.fastq.gz`;
-    if find ./clean/${b}.cleaned.fastq.gz; then
+    if [[ -n "$(find -path ./clean/${b}.cleaned.fastq.gz)" ]]; then
         continue
     else
         run_assembly_shuffleReads.pl ${b}"_1.fastq.gz" ${b}"_2.fastq.gz" > clean/${b}.fastq;
@@ -96,8 +100,7 @@ for i in *_1.fastq.gz; do
         remove_file clean/${b}.fastq;
     fi
 done
-remove_file ./clean/\*_1.fastq.gz.cleaned.fastq.gz
-remove_file ./clean/\*_1.fastq.gz
+remove_file ./clean/\**
 
 ##### Kraken is called here as a contamination check #####
 #Mini kraken is used here, since it takes up less space.  If results are inconclusive, can run kraken with the larger database
@@ -147,7 +150,7 @@ for i in ${id[@]}; do
     #May need to add in some files which explain the limits for different organisms, eg acceptable lengths of genome for e coli, acceptable N50 values, etc.....
 done
 
-##### Run Quality and Coverage Metrics ##### NEED TODO THIS PART!!!!
+##### Run Quality and Coverage Metrics #####
 for i in ${id[@]}; do
     run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
 done
@@ -208,6 +211,7 @@ sal_isolates="$(awk -F ';' '$2 ~ /Salmonella/' ./mash/sample_id/raw.csv | awk -F
 make_directory SeqSero_output
 echo "Salmonella "$sal_isolates
 oddity="See comments below*"
+remove_file ./SeqSero_output/all_serotype_results
 for i in $sal_isolates; do
 #for i in ${id[@]}; do #In case of emergency (classification acting up), uncomment this line to serotype every isolate using SeqSero, comment out line above
     # Check if SeqSero output exists for each Salmonenlla spp. isolate; skip if so
@@ -229,7 +233,7 @@ for i in $sal_isolates; do
     fi
     echo ${i} >> ./SeqSero_output/all_serotype_results
     head -10 ./SeqSero_output/${i}/Seqsero_result.txt >> ./SeqSero_output/all_serotype_results
-    echo '\n'
+    echo >> ./SeqSero_output/all_serotype_results
 done
 
 #This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
@@ -246,4 +250,12 @@ for y in ${databases[@]}; do
         abricate -db ${y} spades_assembly_trim/${i}/contigs.fasta > abricate/${i}_${y}.tab
     done
     abricate --summary ./abricate/*_${y}.tab > ./abricate/summary/${y}_summary
+done
+
+##### Move all of the fastq.gz files into a folder #####
+make_directory fastq_files
+for i in ${id[@]}; do
+    if [[ -n "$(find *$i*fastq.gz)" ]]; then
+        mv *$i*fastq.gz fastq_files
+    fi
 done
