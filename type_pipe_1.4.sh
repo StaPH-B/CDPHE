@@ -2,7 +2,7 @@
 #Author: Logan Fink
 #Usage: script to type bacteria and characterize AMR
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 02/15/18
+#Last revised 07/18/18
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
@@ -163,7 +163,7 @@ for i in ${id[@]}; do
         echo ${i}
         mash sketch ./clean/*${i}*.cleaned.fastq.gz
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
-        mash dist /home/staphb/databases/mash/refseq_CURRENT/RefSeqSketchesDefaults.msh ./mash/*${i}*.fastq.gz.msh > mash/${i}_distance.tab
+        mash dist /home/staphb/databases/mash/refseq_CURRENT/*.msh ./mash/*${i}*.fastq.gz.msh > mash/${i}_distance.tab
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
         echo $i >> ./mash/top_mash_results;
         head -10 mash/${i}_distance.tab >> ./mash/top_mash_results;
