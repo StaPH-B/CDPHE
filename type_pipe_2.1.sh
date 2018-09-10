@@ -276,7 +276,7 @@ done
 echo 'FINISHED RUNNING ABRICATE'
 
 #####Create a file with all the relevant run info
-remove_file isolate_info_file
+remove_file isolate_info_file.tsv
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
 echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file
 for i in ${id[@]}; do
@@ -301,7 +301,7 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
     echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
 done
 
@@ -315,3 +315,6 @@ for i in ${id[@]}; do
         mv *$i*fastq.gz fastq_files
     fi
 done
+echo "********************************"
+echo "type_pipe pipeline has finished."
+echo "********************************"
