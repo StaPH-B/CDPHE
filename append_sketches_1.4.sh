@@ -1,5 +1,5 @@
 #! /bin/bash
-# Last revised 7/24/18 - CJK
+# Last revised 8/20/18 - CJK
 
 
 #This function will check to make sure the directory doesn't already exist before trying to create it
@@ -51,7 +51,7 @@ echo "Copying historical mash database from google storage bucket to /home/staph
 cp $(readlink -f $(ls -t $(find ~/backup/logan/mash/*.msh -type f) | head -n 1)) /home/staphb/databases/mash/mash_hist_db/
 
 #set the mash historical database path for use in loop structure below.
-mash_hist_db=/home/staphb/databases/mash/mash_hist_db/
+mash_hist_db=/home/staphb/databases/mash/mash_hist_db
 echo "Path for mash_hist_db is set to: "$mash_hist_db
 
 #This section makes sure that the current sequencing run hasn't already been added
@@ -99,4 +99,9 @@ for i in /home/staphb/Basespace/Projects/*$SEQ_NUM*; do
         fi;
     fi;
 done
+
+# moves the historical database back to the storage bucket and renames the file to include the date the script was last ran and the sequencing run number.
 mv $mash_hist_db/tmp.msh /home/staphb/backup/logan/mash/wgs_CO_sketches_$(date +'%m%d%y')_$SEQ_NUM.msh
+
+# removes the existing historical database from the VM, to prevent errors arising from two .msh files being present in the /home/staphb/databases/mash/mast_hist_db/ directory
+rm -r $mash_hist_db
