@@ -23,6 +23,9 @@ echo $SEQ_NUM
 mv wgs_CO_sketches.msh tmp.msh
 num=1
 
+#Make sure Basespace is connected
+yes n | basemount /home/staphb/Basespace/
+
 #This section makes sure that the current sequencing run hasn't already been added
 for i in /home/staphb/Basespace/Projects/*$SEQ_NUM*; do
     if [[ "${i}" =~ "SEQ" ]]; then
