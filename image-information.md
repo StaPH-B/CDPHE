@@ -3,7 +3,7 @@ To do:
   * delete redundant sections
   * change order to reflect that of the type_pipe script
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions for SRA-toolkit
+  * add install instructions for Basemount
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) |
