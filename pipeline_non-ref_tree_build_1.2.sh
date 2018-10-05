@@ -2,7 +2,7 @@
 #Author: Logan Fink
 #Usage: script to create a reference free phylogenetic tree from a set of fastq files
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 02/15/18
+#Last revised 06/29/18
 #This function will check if the file exists before trying to remove it
 remove_file () {
     if [[ $1=~"/" ]]; then
@@ -106,9 +106,26 @@ for i in ${id[@]}; do
         echo 'File exists and is '$size' big.'
     else
         echo 'constructing assemblies for '$i', could take some time...'
-         spades.py --pe1-12 ./clean/*${i}*.cleaned.fastq.gz -o spades_assembly_trim/${i}/
+        echo "spades.py --pe1-12 ./clean/*"${i}"*.cleaned.fastq.gz -o spades_assembly_trim/"${i}"/"
+        spades.py --pe1-12 ./clean/*${i}*.cleaned.fastq.gz -o spades_assembly_trim/${i}/
     fi
 done
+
+make_directory new_temp
+make_directory new_temp/spades_assemblies
+for i in ${id[@]}; do
+    if [[ -n "$(find -path ./spades_assembly_trim/$i/contigs.fasta 2>/dev/null)" ]]; then
+        continue
+    else
+        cp ./clean/${i}*.cleaned.fastq.gz new_temp/
+        spades_file=./clean/${i}*.cleaned.fastq.gz
+        echo $spades_file
+        echo 'constructing assemblies for '$i', second try...'
+        spades.py -o new_temp/spades_assemblies/${i}/ --pe1-12 ./new_temp/${i}_*.cleaned.fastq.gz
+    fi
+done
+mv new_temp/spades_assemblies/* spades_assembly_trim/
+remove_file new_temp
 
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
