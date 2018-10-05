@@ -1,7 +1,21 @@
 To do:
-  * change serotypefinder install instructions to the ones I used for installing it into Docker.
+  * change serotypefinder install instructions to the ones I used for installing it into Docker
   * delete redundant sections
   * change order to reflect that of the type_pipe script
+  * show location of various databases (Kraken, Mash, serotypefinder, etc.)
+
+### Software/Tools used (in order they appear in type_pipe_X.X.sh)
+| Software | Version | commands used (if not the name of the tool) |
+| -------- | ------- | ------------------------------------------- |
+| SRA-toolkit | x.x.x | `fastq-dump` |
+| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` |
+| Kraken | x.x.x | |
+| SPAdes | x.x.x. | |
+| QUAST | x.x.x | |
+| Mash | x.x.x | |
+| SerotypeFinder | x.x.x | |
+| SeqSero | x.x.x | |
+| ABRicate | x.x.x | |
 
 ### kraken
 jellyfish
