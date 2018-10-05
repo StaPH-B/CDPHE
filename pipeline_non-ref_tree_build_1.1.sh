@@ -1,9 +1,9 @@
 #!/bin/bash
 #Author: Logan Fink
-#Usage: script to type bacteria and characterize AMR
+#Usage: script to create a reference free phylogenetic tree from a set of fastq files
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 1/11/2018
-#This function wid check if the file exists before trying to remove it
+#Last revised 02/15/18
+#This function will check if the file exists before trying to remove it
 remove_file () {
     if [[ $1=~"/" ]]; then
         if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
@@ -35,6 +35,12 @@ make_directory () {
         fi;
     fi
 }
+##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
+if [[ -n "$(find ./fastq_files)" ]]; then
+    mv ./fastq_files/* .
+    rm -rf ./fastq_files
+fi
+
 declare -a srr=() #PASTE IN ANY SRR NUMBERS INTO FILE named: SRR
 while IFS= read -r line; do
     srr+=("$line")
@@ -79,7 +85,6 @@ for i in *R1_001.fastq.gz; do
         remove_file clean/${b}.fastq;
     fi
 done
-remove_file ./clean/\*R1_001.fastq.gz.cleaned.fastq.gz
 for i in *_1.fastq.gz; do
     b=`basename ${i} _1.fastq.gz`;
     if find ./clean/${b}.cleaned.fastq.gz; then
@@ -91,8 +96,7 @@ for i in *_1.fastq.gz; do
         remove_file clean/${b}.fastq;
     fi
 done
-remove_file ./clean/\*_1.fastq.gz.cleaned.fastq.gz
-remove_file ./clean/\*_1.fastq.gz
+remove_file ./clean/\**
 
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
 make_directory ./spades_assembly_trim
@@ -133,6 +137,14 @@ roary -p 8 -e -n -v -f ./roary ./gff_files/*.gff
 
 ##### Run raxml on the roary alignment to generate a tree #####
 raxmlHPC -m GTRGAMMA -p 12345 -s roary/core_gene_alignment.aln -#20 -n phylo_output
-rm -r raxml/
+rm -rf raxml/
 make_directory raxml
 mv RAxML* raxml/
+
+##### Move all of the fastq.gz files into a folder #####
+make_directory fastq_files
+for i in ${id[@]}; do
+    if [[ -n "$(find *$i*fastq.gz)" ]]; then
+        mv *$i*fastq.gz fastq_files
+    fi
+done
