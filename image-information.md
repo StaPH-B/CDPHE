@@ -3,11 +3,12 @@ To do:
   * delete redundant sections
   * change order to reflect that of the type_pipe script
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
+  * add install instructions for SRA-toolkit
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) |
 | -------- | ------- | ------------------------------------------- |
-| SRA-toolkit | x.x.x | `fastq-dump` |
+| SRA-toolkit | 2.9.2 | `fastq-dump` |
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` |
 | Kraken | x.x.x | |
 | SPAdes | x.x.x. | |
@@ -16,6 +17,36 @@ To do:
 | SerotypeFinder | x.x.x | |
 | SeqSero | x.x.x | |
 | ABRicate | x.x.x | |
+
+### SRA-toolkit
+Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
+```bash
+wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.2/sratoolkit.2.9.2-ubuntu64.tar.gz
+tar -xzf sratoolkit.tar.gz
+rm -rf sratoolkit.tar.gz
+
+# add this line to the end of your ~/.bashrc
+export PATH=$PATH:~/sratoolkit.2.9.2-ubuntu64/bin
+# refresh your shell by either logging out and back in, or run:
+source ~/.bashrc
+# test the install with:
+which fastq-dump
+# This will output the full path to sratoolkit.2.9.2-ubuntu64/bin
+# if it returns nothing, the executable is not in your $PATH
+
+# test that the install is functional with:
+fastq-dump --stdout SRR390728 | head -n 8
+
+# output should be exactly this:
+@SRR390728.1 1 length=72
+CATTCTTCACGTAGTTCTCGAGCCTTGGTTTTCAGCGATGGAGAATGACTTTGACAAGCTGAGAGAAGNTNC
++SRR390728.1 1 length=72
+;;;;;;;;;;;;;;;;;;;;;;;;;;;9;;665142;;;;;;;;;;;;;;;;;;;;;;;;;;;;;96&&&&(
+@SRR390728.2 2 length=72
+AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
++SRR390728.2 2 length=72
+;;;;;;;;;;;;;;;;;4;;;;3;393.1+4&&5&&;;;;;;;;;;;;;;;;;;;;;<9;<;;;;;464262
+```
 
 ### kraken
 jellyfish
