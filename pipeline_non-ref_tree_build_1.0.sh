@@ -1,25 +1,58 @@
 #!/bin/bash
+#Author: Logan Fink
+#Usage: script to type bacteria and characterize AMR
+#Permission to copy and modify is granted without warranty of any kind
+#Last revised 1/11/2018
+#This function wid check if the file exists before trying to remove it
+remove_file () {
+    if [[ $1=~"/" ]]; then
+        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
+            rm -rf $1
+        else
+            echo "Continuing on"
+        fi;
+    else
+        if [[ -n "$(find $1 2>/dev/null)" ]]; then
+            rm -rf $1;
+        else
+            echo "Continuing on"
+        fi;
+    fi
+}
+#This function wid check to make sure the directory doesn't already exist before trying to create it
+make_directory () {
+    if [[ $1=~"/" ]]; then
+        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
+            echo "Directory "$1" already exists"
+        else
+            mkdir $1
+        fi;
+    else
+        if [[ -n "$(find $1 2>/dev/null)" ]]; then
+            echo "Directory "$1" already exists"
+        else
+            mkdir $1
+        fi;
+    fi
+}
 declare -a srr=() #PASTE IN ANY SRR NUMBERS INTO FILE named: SRR
 while IFS= read -r line; do
     srr+=("$line")
 done < ./SRR
 #find . -maxdepth 1 -name "*fastq*" |cut -d '-' -f 1|cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '-' and '_')
-find . -maxdepth 1 -name "*fastq*" |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiter here is '_')
-more tmp1
+find . -maxdepth 1 -name "*fastq*" |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '_')
 declare -a tmp=()
 tmp1='tmp1'
 tmpfile=`cat $tmp1`
 for line in $tmpfile; do
     tmp=("${tmp[@]}" "$line");
 done
-ill=($(printf "%s\n" "${tmp[@]}"|sort -u)) #Get all unique values and output them to array
-ill=("${ill[@]}" "${srr[@]}") #Combine the automatically generated list with the SRR list
-#echo "${ill[@]}"
-rm tmp
-rm tmp1
+id=($(printf "%s\n" "${tmp[@]}"|sort -u)) #Get all unique values and output them to array
+id=("${id[@]}" "${srr[@]}") #Combine the automatically generated list with the SRR list
+remove_file tmp
 
 ##### Fetch and fastq-dump all reads from NCBI identified by "SRR" #####
-for i in ${ill[@]}; do
+for i in ${id[@]}; do
     if [[ $i =~ "SRR" ]]; then
         if (find ./*$i*); then
             echo "Files are here."
@@ -33,19 +66,20 @@ for i in ${ill[@]}; do
 done
 
 ##### These are the QC trimming scripts as input to trimClean #####
-mkdir clean
+make_directory clean
 echo "cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning cleaning"
 for i in *R1_001.fastq.gz; do
     b=`basename ${i} _R1_001.fastq.gz`;
-    if find ./clean/${b}.cleaned.fastq.gz; then
+    if [[ -n "$(find . -maxdepth 2 -name ${b}.cleaned.fastq.gz)" ]]; then
         continue
     else
         run_assembly_shuffleReads.pl ${b}"_R1_001.fastq.gz" ${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
-        rm clean/${b}.fastq;
+        remove_file clean/${b}.fastq;
     fi
 done
+remove_file ./clean/\*R1_001.fastq.gz.cleaned.fastq.gz
 for i in *_1.fastq.gz; do
     b=`basename ${i} _1.fastq.gz`;
     if find ./clean/${b}.cleaned.fastq.gz; then
@@ -54,17 +88,18 @@ for i in *_1.fastq.gz; do
         run_assembly_shuffleReads.pl ${b}"_1.fastq.gz" ${b}"_2.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
-        rm clean/${b}.fastq;
+        remove_file clean/${b}.fastq;
     fi
 done
-echo 'Reads trimmed.'
+remove_file ./clean/\*_1.fastq.gz.cleaned.fastq.gz
+remove_file ./clean/\*_1.fastq.gz
 
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
-mkdir $PWD/spades_assembly_trim
-for i in ${ill[@]}; do
-    if (find ./spades_assembly_trim/$i/contigs.fasta); then #This will print out the size of the spades assembly if it already exists
-        size=$(du -s ./spades_assembly_trim/$i/contigs.fasta | awk '{print $1}');
-        echo 'File exists and is '$size'MB big.'
+make_directory ./spades_assembly_trim
+for i in ${id[@]}; do
+    if [[ -n "$(find -path ./spades_assembly_trim/$i/contigs.fasta 2>/dev/null)" ]]; then #This will print out the size of the spades assembly if it already exists
+        size=$(du -hs ./spades_assembly_trim/$i/contigs.fasta | awk '{print $1}');
+        echo 'File exists and is '$size' big.'
     else
         echo 'constructing assemblies for '$i', could take some time...'
          spades.py --pe1-12 ./clean/*${i}*.cleaned.fastq.gz -o spades_assembly_trim/${i}/
@@ -72,15 +107,15 @@ for i in ${ill[@]}; do
 done
 
 ##### Run quast assembly statistics for verification that the assemblies worked #####
-mkdir $PWD/quast
-for i in ${ill[@]}; do
+make_directory quast
+for i in ${id[@]}; do
     quast.py spades_assembly_trim/$i/contigs.fasta -o quast/$i
 done
 
 ##### Run prokka on all the isolates to get the core genomes and generate .gff files #####
-mkdir ./prokka
-for i in ${ill[@]}; do
-    if (find ./prokka/$i); then
+make_directory ./prokka
+for i in ${id[@]}; do
+    if [[ -n "$(find -path ./prokka/$i)" ]]; then
         echo "Prokka has been run on this isolate."
     else
         echo "Prokka will now be run on "$i
@@ -88,16 +123,16 @@ for i in ${ill[@]}; do
     fi
 done
 
-rm -r ./gff_files
-mkdir ./gff_files #make directory to hold the .gff files output by prokka
+remove_file -r ./gff_files
+make_directory ./gff_files #make directory to hold the .gff files output by prokka
 cp prokka/*/*.gff gff_files/ #copy over the .gff files from prokka
 
 ##### Run roary using the .gff file folder #####
-rm -r roary
+rm -rf roary
 roary -p 8 -e -n -v -f ./roary ./gff_files/*.gff
 
-##### Run raxml using the GTRGAMMA model on the data to generate a tree #####
+##### Run raxml on the roary alignment to generate a tree #####
 raxmlHPC -m GTRGAMMA -p 12345 -s roary/core_gene_alignment.aln -#20 -n phylo_output
 rm -r raxml/
-mkdir raxml
+make_directory raxml
 mv RAxML* raxml/
