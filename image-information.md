@@ -20,7 +20,7 @@ To do:
 
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
-```bash
+```
 wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.2/sratoolkit.2.9.2-ubuntu64.tar.gz
 tar -xzf sratoolkit.tar.gz
 rm -rf sratoolkit.tar.gz
@@ -50,11 +50,15 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 
 ### kraken
 jellyfish
+
 download 1.1.11 into downloads folder
+
 installed into `/opt/jellyfish`
 
 kraken
+
 cloned github into downloads
+
 installed into `/opt/kraken`
 ```
 sudo apt-get install zlib1g-dev
@@ -96,7 +100,6 @@ cd $HOME
 Clone the latest version of the repository:
 ```bash
 git clone https://github.com/tseemann/prokka.git
-ls prokka
 ```
 Index the sequence databases
 ```bash
