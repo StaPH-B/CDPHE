@@ -12,12 +12,12 @@ To do:
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
 | Kraken | x.x.x | | |
 | SPAdes | x.x.x. | | |
-| QUAST | x.x.x | | |
+| QUAST | x.x.x | | https://github.com/ablab/quast |
 | Mash | x.x.x | | |
 | SerotypeFinder | x.x.x | | |
 | SeqSero | x.x.x | | |
 | SISTR | x.x.x | | |
-| ABRicate | x.x.x | | |
+| ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
@@ -108,12 +108,64 @@ export PATH=$PATH:/opt/kraken
 Install instructions tested?
 
 ### SPAdes
+```
+wget http://cab.spbu.ru/files/release3.12.0/SPAdes-3.12.0-Linux.tar.gz 
+tar -xzf SPAdes-3.12.0-Linux.tar.gz
+rm -rf SPAdes-3.12.0-Linux.tar.gz
 
-Install instructions tested?
+nano ~/.bashrc
+# add this line to the end of your ~/.bashrc
+export PATH=$PATH:~/downloads/SPAdes-3.12.0-Linux/bin
+# refresh your shell by either logging out and back in, or run:
+source ~/.bashrc
+# test the install with:
+which spades.py
+# This will output the full path to SPAdes-3.12.0-Linux/bin/spades.py
+# if it returns nothing, the executable is not in your $PATH
+
+# test that the install is functional with:
+spades.py --test
+# output should look like this:
+===== Assembling finished. Used k-mer sizes: 21, 33, 55
+
+ * Corrected reads are in spades_test/corrected/
+ * Assembled contigs are in spades_test/contigs.fasta
+ * Assembled scaffolds are in spades_test/scaffolds.fasta
+ * Assembly graph is in spades_test/assembly_graph.fastg
+ * Assembly graph in GFA format is in spades_test/assembly_graph.gfa
+ * Paths in the assembly graph corresponding to the contigs are in spades_test/contigs.paths
+ * Paths in the assembly graph corresponding to the scaffolds are in spades_test/scaffolds.paths
+
+======= SPAdes pipeline finished.
+
+========= TEST PASSED CORRECTLY.
+
+SPAdes log can be found here: spades_test/spades.log
+
+Thank you for using SPAdes!
+```
+Install instructions tested? YES
 
 ### QUAST
+```
+sudo apt-get install zlib1g-dev pkg-config libfreetype6-dev libpng-dev wget g++ make perl python python-setuptools python-matplotlib
+cd ~/downloads
+wget https://downloads.sourceforge.net/project/quast/quast-5.0.0.tar.gz
+tar -xzf quast-5.0.0.tar.gz
+rm -rf quast-5.0.0.tar.gz
 
-Install instructions tested?
+cd /quast-5.0.0
+sudo ./setup.py install
+# test that install worked, and quast.py is in the $PATH with:
+which quast.py
+# This will output: /usr/local/bin/quast.py
+# if it returns nothing, the executable is not in your $PATH due to setup.py script not running correctly
+
+# test the install with
+sudo ./setup.py test
+
+```
+Install instructions tested? YES
 
 ### Mash
 ```
@@ -288,7 +340,9 @@ sudo add-apt-repository \
    $(lsb_release -cs) \
    stable"
 sudo apt-get update
-"sudo" apt-get install docker-ce
+sudo apt-get install docker-ce
+# Test install with:
+sudo docker run hello-world
 ```
 
 ##### Post-Docker-install steps to not have to use ‘sudo’ before every docker command
@@ -297,7 +351,8 @@ Pulled from here: https://docs.docker.com/install/linux/linux-postinstall/
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
-Log out and log back in (close & re-open terminal), so that your group membership is re-evaluated
+Log out and log back in (close & re-open terminal), so that your group membership is re-evaluated.
+
 Verify that you can run docker images without sudo with:
 `docker images`
 
@@ -311,7 +366,7 @@ To fix this problem, either remove the `~/.docker/` directory (it is recreated a
 sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
 sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
-Install instructions tested?
+Install instructions tested? YES
 
 ### Perlbrew (required for serotypefinder)
 TO-DO: THESE COMMANDS NEED TO BE ADJUSTED - PROBABLY BETTER TO SOURCE .BASHRC 
