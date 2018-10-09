@@ -8,7 +8,7 @@ To do:
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | -------- |
-| SRA-toolkit | 2.9.2 | `fastq-dump` | |
+| SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
 | Kraken | x.x.x | | |
 | SPAdes | x.x.x. | | |
@@ -33,20 +33,26 @@ To do:
 | Perlbrew | x.x.x | | |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
 
+#### Notes:
+  * All software will be stored into the `$HOME/downloads` directory
+  * This guide assumes the user has root access, if necessary.
+  * 
+
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
 ```
 wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.2/sratoolkit.2.9.2-ubuntu64.tar.gz
-tar -xzf sratoolkit.tar.gz
-rm -rf sratoolkit.tar.gz
-
+tar -xzf sratoolkit.2.9.2-ubuntu64.tar.gz
+rm -rf sratoolkit.2.9.2-ubuntu64.tar.gz
+mv sratoolkit.2.9.2-ubuntu64/ ~/downloads
+nano ~/.bashrc
 # add this line to the end of your ~/.bashrc
-export PATH=$PATH:~/sratoolkit.2.9.2-ubuntu64/bin
+export PATH=$PATH:~/downloads/sratoolkit.2.9.2-ubuntu64/bin
 # refresh your shell by either logging out and back in, or run:
 source ~/.bashrc
 # test the install with:
 which fastq-dump
-# This will output the full path to sratoolkit.2.9.2-ubuntu64/bin
+# This will output the full path to sratoolkit.2.9.2-ubuntu64/bin/fastq-dump
 # if it returns nothing, the executable is not in your $PATH
 
 # test that the install is functional with:
@@ -62,9 +68,12 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 +SRR390728.2 2 length=72
 ;;;;;;;;;;;;;;;;;4;;;;3;393.1+4&&5&&;;;;;;;;;;;;;;;;;;;;;<9;<;;;;;464262
 ```
+Install instructions tested? YES 
+
 
 ### CG-pipeline/Lyve-SET
 
+Install instructions tested?
 
 ### Kraken
 jellyfish
@@ -96,12 +105,15 @@ nano $HOME/.bash_vars
 # add the following: export PATH=$PATH:/opt/jellyfish/bin
 export PATH=$PATH:/opt/kraken
 ```
+Install instructions tested?
 
 ### SPAdes
 
+Install instructions tested?
 
 ### QUAST
 
+Install instructions tested?
 
 ### Mash
 ```
@@ -123,6 +135,7 @@ sudo apt-get install libgsl2
 sudo apt-get install autoconf
 Sudo ./configure --prefix=/opt/mash
 ```
+Install instructions tested?
 
 ### SerotypeFinder
 TO-DO: ADD INSTRUCTIONS FOR GETTING SEROTYPEFINDER DATABASE FROM MY DOCKER REPO
@@ -139,6 +152,7 @@ add the following: export PATH=$PATH:/home/staphb/downloads/serotypefinder
 cd 
 . .bash_vars
 ```
+Install instructions tested?
 
 ### SeqSero
 ```
@@ -164,6 +178,7 @@ add the following: export PATH=$PATH:/home/staphb/downloads/SeqSero
 cd 
 . .bash_vars
 ```
+Install instructions tested?
 
 ### SISTR
 ```
@@ -173,6 +188,7 @@ pip install wheel
 sudo pip install numpy pandas
 pip install sistr_cmd
 ```
+Install instructions tested?
 
 ### ABRicate
 git clone https://github.com/tseemann/abricate.git
@@ -204,7 +220,7 @@ add the following: export PATH=$PATH:/home/staphb/downloads/abricate/bin
 cd 
 . .bash_vars
 ```
-
+Install instructions tested?
 
 
 ### prokka
@@ -229,6 +245,7 @@ Index the sequence databases
 ```bash
 prokka/bin/prokka --setupdb
 ```
+Install instructions tested?
 
 ### roary
 ```
@@ -242,9 +259,11 @@ sudo cpanm -f Bio::Roary
 sudo apt-get install roary
 Add the following lines to your $HOME/.bashrc file, or to /etc/profile.d/roary.sh to make it available to all users:
 ```
+Install instructions tested?
 
 ### raxml
 
+Install instructions tested?
 
 ### Docker CE
 ```
@@ -291,6 +310,7 @@ To fix this problem, either remove the `~/.docker/` directory (it is recreated a
 sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
 sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
+Install instructions tested?
 
 ### Perlbrew (required for serotypefinder)
 TO-DO: THESE COMMANDS NEED TO BE ADJUSTED - PROBABLY BETTER TO SOURCE .BASHRC 
@@ -303,6 +323,7 @@ perlbrew --sudo install-cpanm
 nano $HOME/.bash_vars
 # add the following: export PERL5LIB=$PERL5LIB:/lib
 ```
+Install instructions tested?
 
 ### BLAST+ Legacy (v2.2.26) for SerotypeFinder
 ```
@@ -313,6 +334,7 @@ which formatblastdb
 # should result in:
 /opt/blast-2.2.26/bin
 ```
+Install instructions tested?
 
 ----------- END ------------------
 
