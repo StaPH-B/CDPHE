@@ -7,7 +7,7 @@ To do:
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | |
+| -------- | ------- | ------------------------------------------- | -------- |
 | SRA-toolkit | 2.9.2 | `fastq-dump` | |
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
 | Kraken | x.x.x | | |
@@ -21,14 +21,14 @@ To do:
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | |
+| -------- | ------- | ------------------------------------------- | ---- |
 | Prokka | x.x.x | | |
 | Roary | x.x.x | | |
 | raxml | x.x.x | | |
 
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- |  |
+| -------- | ------- | ------------------------------------------- | ---- |
 | Docker CE | x.x.x | | |
 | Perlbrew | x.x.x | | |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
@@ -85,6 +85,17 @@ sudo apt-get install zlib1g-dev
 git clone https://github.com/DerrickWood/kraken.git
 sudo ./install_kraken.sh /opt/kraken/
 ```
+OR
+```
+cd downloads
+sudo git clone https://github.com/DerrickWood/kraken.git
+cd kraken
+sudo mkdir /opt/kraken
+sudo ./install_kraken.sh /opt/kraken/
+nano $HOME/.bash_vars
+# add the following: export PATH=$PATH:/opt/jellyfish/bin
+export PATH=$PATH:/opt/kraken
+```
 
 ### SPAdes
 
@@ -114,7 +125,20 @@ Sudo ./configure --prefix=/opt/mash
 ```
 
 ### SerotypeFinder
-
+TO-DO: ADD INSTRUCTIONS FOR GETTING SEROTYPEFINDER DATABASE FROM MY DOCKER REPO
+```
+ssh-keygen
+save key in default location
+don't give password
+copy /home/staphb/.ssh/id_rsa.pub into bitbucket account @ https://bitbucket.org/account/user/your-username-here/ssh-keys/
+git clone https://bitbucket.org/genomicepidemiology/serotypefinder.git
+cd serotypefinder
+./INSTALL_DB database
+nano $HOME/.bash_vars
+add the following: export PATH=$PATH:/home/staphb/downloads/serotypefinder
+cd 
+. .bash_vars
+```
 
 ### SeqSero
 ```
@@ -122,9 +146,24 @@ git clone https://github.com/denglab/SeqSero.git
 sudo apt-get install python-biopython
 ```
 python already at 2.7
+
 bwa already installed
+
 samtools already installed
+
 did not install isPcr
+
+OR
+
+```
+cd downloads
+git clone https://github.com/denglab/SeqSero.git
+sudo apt-get install python-biopython
+nano $HOME/.bash_vars
+add the following: export PATH=$PATH:/home/staphb/downloads/SeqSero
+cd 
+. .bash_vars
+```
 
 ### SISTR
 ```
@@ -153,12 +192,30 @@ git clone https://github.com/tseemann/abricate.git
 ./abricate/bin/abricate --setupdb
 ./abricate/bin/abricate ./abricate/test/assembly.fa
 ```
+OR
+```
+sudo apt-get install emboss bioperl gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
+git clone https://github.com/tseemann/abricate.git
+./abricate/bin/abricate --check
+./abricate/bin/abricate --setupdb
+./abricate/bin/abricate ./abricate/test/assembly.fa
+nano $HOME/.bash_vars
+add the following: export PATH=$PATH:/home/staphb/downloads/abricate/bin
+cd 
+. .bash_vars
+```
+
 
 
 ### prokka
 ```
+cd downloads
+sudo apt-get install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
 git clone https://github.com/tseemann/prokka.git
+cd prokka
+bin/prokka --setupdb
 ```
+
 ##### Github - install from source code
 Choose somewhere to put it, for example in your home directory (no root access required):
 ```bash
@@ -247,7 +304,18 @@ nano $HOME/.bash_vars
 # add the following: export PERL5LIB=$PERL5LIB:/lib
 ```
 
+### BLAST+ Legacy (v2.2.26) for SerotypeFinder
+```
+# git clone files for blast-legacy from git repo containing dockerfile for serotypefinder
+# move to /opt
+# make sure that the blast executables are in the $PATH
+which formatblastdb
+# should result in:
+/opt/blast-2.2.26/bin
+```
+
 ----------- END ------------------
+
 --Everything below is from the image info google-doc, it may or may not work when installing using these directions---
 
 ### serotypefinder
@@ -366,18 +434,6 @@ make -j 4
 sudo make install
 ```
 
-### Kraken
-```
-cd downloads
-sudo git clone https://github.com/DerrickWood/kraken.git
-cd kraken
-sudo mkdir /opt/kraken
-sudo ./install_kraken.sh /opt/kraken/
-nano $HOME/.bash_vars
-# add the following: export PATH=$PATH:/opt/jellyfish/bin
-export PATH=$PATH:/opt/kraken
-```
-
 ### Install mash/capnproto
 ```
 cd downloads
@@ -398,15 +454,6 @@ Sudo make
 sudo make install
 ```
 
-### Install Prokka
-```
-cd downloads
-sudo apt-get install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
-git clone https://github.com/tseemann/prokka.git
-cd prokka
-bin/prokka --setupdb
-```
-
 ### Roary
 ```
 git clone https://github.com/sanger-pathogens/Roary.git
@@ -416,98 +463,4 @@ cpanm LWP::Simple
 cpanm Text::CSV
 cpanm JSON
 cpanm File::Slurp
-```
-
-### Install SeqSero
-```
-cd downloads
-git clone https://github.com/denglab/SeqSero.git
-sudo apt-get install python-biopython
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/SeqSero
-cd 
-. .bash_vars
-```
-
-### Install Serotype Finder
-```
-ssh-keygen
-save key in default location
-don't give password
-copy /home/staphb/.ssh/id_rsa.pub into bitbucket account @ https://bitbucket.org/account/user/your-username-here/ssh-keys/
-git clone https://bitbucket.org/genomicepidemiology/serotypefinder.git
-cd serotypefinder
-./INSTALL_DB database
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/serotypefinder
-cd 
-. .bash_vars
-```
-
-### Install abricate
-```
-sudo apt-get install emboss bioperl gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
-git clone https://github.com/tseemann/abricate.git
-./abricate/bin/abricate --check
-./abricate/bin/abricate --setupdb
-./abricate/bin/abricate ./abricate/test/assembly.fa
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/abricate/bin
-cd 
-. .bash_vars
-```
-
-### Install SISTR
-```
-sudo apt-get install python-pip python-dev build-essential 
-sudo pip install --upgrade pip
-pip install wheel
-sudo pip install numpy pandas
-pip install sistr_cmd
-```
-
-### Install Docker https://docs.docker.com/install/linux/docker-ce/ubuntu/#set-up-the-repository
-```
-sudo apt-get update
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-(#Verify key: 
-sudo apt-key fingerprint 0EBFCD88 
-#should return: 
-pub   4096R/0EBFCD88 2017-02-22
-      Key fingerprint = 9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
-uid                  Docker Release (CE deb) <docker@docker.com>
-sub   4096R/F273FCD8 2017-02-22)
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-sudo apt-get update
-"sudo" apt-get install docker-ce
-```
-
-##### Post-Docker-install steps to not have to use ‘sudo’ before every docker command
-Pulled from here: https://docs.docker.com/install/linux/linux-postinstall/
-```
-sudo groupadd docker
-sudo usermod -aG docker $USER
-```
-Log out and log back in (close & re-open terminal), so that your group membership is re-evaluated
-Verify that you can run docker images without sudo with:
-`docker images`
-
-If you initially ran Docker CLI commands using sudo before adding your user to the docker group, you may see the following error, which indicates that your ~/.docker/ directory was created with incorrect permissions due to the sudo commands.
-```
-WARNING: Error loading config file: /home/user/.docker/config.json -
-stat /home/user/.docker/config.json: permission denied
-```
-To fix this problem, either remove the `~/.docker/` directory (it is recreated automatically, but any custom settings are lost), or change its ownership and permissions using the following commands:
-```
-sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
-sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
