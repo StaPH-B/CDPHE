@@ -11,8 +11,8 @@ To do:
 | SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
 | Kraken | x.x.x | | |
-| SPAdes | x.x.x. | | |
-| QUAST | x.x.x | | https://github.com/ablab/quast |
+| SPAdes | 3.12.0 | | |
+| QUAST | 5.0.0 | | https://github.com/ablab/quast |
 | Mash | x.x.x | | |
 | SerotypeFinder | x.x.x | | |
 | SeqSero | x.x.x | | |
@@ -23,7 +23,7 @@ To do:
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
 | Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
-| Roary | x.x.x | | |
+| Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary |
 | raxml | x.x.x | | |
 
 ### Other Software/Tools needed (not part of either script listed above)
@@ -70,10 +70,9 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 ```
 Install instructions tested? YES 
 
-
 ### CG-pipeline/Lyve-SET
 
-Install instructions tested?
+Install instructions tested? NO
 
 ### Kraken
 jellyfish
@@ -105,7 +104,7 @@ nano $HOME/.bash_vars
 # add the following: export PATH=$PATH:/opt/jellyfish/bin
 export PATH=$PATH:/opt/kraken
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### SPAdes
 ```
@@ -187,7 +186,7 @@ sudo apt-get install libgsl2
 sudo apt-get install autoconf
 Sudo ./configure --prefix=/opt/mash
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### SerotypeFinder
 TO-DO: ADD INSTRUCTIONS FOR GETTING SEROTYPEFINDER DATABASE FROM MY DOCKER REPO
@@ -204,7 +203,7 @@ add the following: export PATH=$PATH:/home/staphb/downloads/serotypefinder
 cd 
 . .bash_vars
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### SeqSero
 ```
@@ -230,7 +229,7 @@ add the following: export PATH=$PATH:/home/staphb/downloads/SeqSero
 cd 
 . .bash_vars
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### SISTR
 ```
@@ -240,7 +239,7 @@ pip install wheel
 sudo pip install numpy pandas
 pip install sistr_cmd
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### ABRicate
 ```
@@ -300,23 +299,22 @@ prokka --listdb
 ```
 Install instructions tested? YES
 
-### roary
+### Roary
 ```
-git clone https://github.com/sanger-pathogens/Roary.git
-```
-##### Ubuntu 14.04/16.04
-All the dependancies can be installed using apt and cpanm. Root permissions are required. Ubuntu 16.04 contains a package for Roary but it is frozen at v3.6.0.
-```bash
 sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank mafft fasttree
-sudo cpanm -f Bio::Roary
-sudo apt-get install roary
-Add the following lines to your $HOME/.bashrc file, or to /etc/profile.d/roary.sh to make it available to all users:
+# install Roary version 3.12.0 specifically
+sudo cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
+# OR install latest Roary version available through CPAN using:
+# sudo cpanm -f Bio::Roary
 ```
-Install instructions tested?
+You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.`
+It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
+
+Install instructions tested? YES
 
 ### raxml
 
-Install instructions tested?
+Install instructions tested? NO
 
 ### Docker CE
 ```
@@ -379,7 +377,7 @@ perlbrew --sudo install-cpanm
 nano $HOME/.bash_vars
 # add the following: export PERL5LIB=$PERL5LIB:/lib
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ### BLAST+ Legacy (v2.2.26) for SerotypeFinder
 ```
@@ -390,7 +388,7 @@ which formatblastdb
 # should result in:
 /opt/blast-2.2.26/bin
 ```
-Install instructions tested?
+Install instructions tested? NO
 
 ----------- END ------------------
 
