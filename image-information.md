@@ -6,17 +6,32 @@ To do:
   * add install instructions for Basemount
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
-| Software | Version | commands used (if not the name of the tool) |
-| -------- | ------- | ------------------------------------------- |
-| SRA-toolkit | 2.9.2 | `fastq-dump` |
-| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` |
-| Kraken | x.x.x | |
-| SPAdes | x.x.x. | |
-| QUAST | x.x.x | |
-| Mash | x.x.x | |
-| SerotypeFinder | x.x.x | |
-| SeqSero | x.x.x | |
-| ABRicate | x.x.x | |
+| Software | Version | commands used (if not the name of the tool) | Link |
+| -------- | ------- | ------------------------------------------- | |
+| SRA-toolkit | 2.9.2 | `fastq-dump` | |
+| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
+| Kraken | x.x.x | | |
+| SPAdes | x.x.x. | | |
+| QUAST | x.x.x | | |
+| Mash | x.x.x | | |
+| SerotypeFinder | x.x.x | | |
+| SeqSero | x.x.x | | |
+| SISTR | x.x.x | | |
+| ABRicate | x.x.x | | |
+
+### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
+| Software | Version | commands used (if not the name of the tool) | Link |
+| -------- | ------- | ------------------------------------------- | |
+| Prokka | x.x.x | | |
+| Roary | x.x.x | | |
+| raxml | x.x.x | | |
+
+### Other Software/Tools needed (not part of either script listed above)
+| Software | Version | commands used (if not the name of the tool) | Link |
+| -------- | ------- | ------------------------------------------- |  |
+| Docker CE | x.x.x | | |
+| Perlbrew | x.x.x | | |
+| Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
 
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
@@ -48,7 +63,10 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 ;;;;;;;;;;;;;;;;;4;;;;3;393.1+4&&5&&;;;;;;;;;;;;;;;;;;;;;<9;<;;;;;464262
 ```
 
-### kraken
+### CG-pipeline/Lyve-SET
+
+
+### Kraken
 jellyfish
 
 download 1.1.11 into downloads folder
@@ -67,7 +85,14 @@ sudo apt-get install zlib1g-dev
 git clone https://github.com/DerrickWood/kraken.git
 sudo ./install_kraken.sh /opt/kraken/
 ```
-### mash
+
+### SPAdes
+
+
+### QUAST
+
+
+### Mash
 ```
 git clone https://github.com/marbl/Mash.git
 ```
@@ -87,6 +112,48 @@ sudo apt-get install libgsl2
 sudo apt-get install autoconf
 Sudo ./configure --prefix=/opt/mash
 ```
+
+### SerotypeFinder
+
+
+### SeqSero
+```
+git clone https://github.com/denglab/SeqSero.git
+sudo apt-get install python-biopython
+```
+python already at 2.7
+bwa already installed
+samtools already installed
+did not install isPcr
+
+### SISTR
+```
+sudo apt-get install python-pip python-dev build-essential 
+sudo pip install --upgrade pip
+pip install wheel
+sudo pip install numpy pandas
+pip install sistr_cmd
+```
+
+### ABRicate
+git clone https://github.com/tseemann/abricate.git
+
+##### Source
+If you install from source, Abricate has the following package dependencies:
+* EMBOSS for `seqret`
+* BLAST+ >2.3.0 for `blastn`, `makeblastdb`, `blastdbcmd`
+* Decompression tools `gzip` and `unzip`
+* Perl modules: `LWP::Simple`, `Text::CSV`, `Bio::Perl`, `JSON`, `File::Slurp`
+
+These are easy to install on an Ubuntu-based system:
+```bash
+sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
+git clone https://github.com/tseemann/abricate.git
+./abricate/bin/abricate --check
+./abricate/bin/abricate --setupdb
+./abricate/bin/abricate ./abricate/test/assembly.fa
+```
+
 
 ### prokka
 ```
@@ -119,34 +186,69 @@ sudo apt-get install roary
 Add the following lines to your $HOME/.bashrc file, or to /etc/profile.d/roary.sh to make it available to all users:
 ```
 
-### abricate
-git clone https://github.com/tseemann/abricate.git
+### raxml
 
-##### Source
-If you install from source, Abricate has the following package dependencies:
-* EMBOSS for `seqret`
-* BLAST+ >2.3.0 for `blastn`, `makeblastdb`, `blastdbcmd`
-* Decompression tools `gzip` and `unzip`
-* Perl modules: `LWP::Simple`, `Text::CSV`, `Bio::Perl`, `JSON`, `File::Slurp`
 
-These are easy to install on an Ubuntu-based system:
-```bash
-sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
-git clone https://github.com/tseemann/abricate.git
-./abricate/bin/abricate --check
-./abricate/bin/abricate --setupdb
-./abricate/bin/abricate ./abricate/test/assembly.fa
+### Docker CE
+```
+sudo apt-get update
+sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+(#Verify key: 
+sudo apt-key fingerprint 0EBFCD88 
+#should return: 
+pub   4096R/0EBFCD88 2017-02-22
+      Key fingerprint = 9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88
+uid                  Docker Release (CE deb) <docker@docker.com>
+sub   4096R/F273FCD8 2017-02-22)
+
+sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+sudo apt-get update
+"sudo" apt-get install docker-ce
 ```
 
-### seqsero
-```bash
-git clone https://github.com/denglab/SeqSero.git
-sudo apt-get install python-biopython
+##### Post-Docker-install steps to not have to use ‘sudo’ before every docker command
+Pulled from here: https://docs.docker.com/install/linux/linux-postinstall/
 ```
-python already at 2.7
-bwa already installed
-samtools already installed
-did not install isPcr
+sudo groupadd docker
+sudo usermod -aG docker $USER
+```
+Log out and log back in (close & re-open terminal), so that your group membership is re-evaluated
+Verify that you can run docker images without sudo with:
+`docker images`
+
+If you initially ran Docker CLI commands using sudo before adding your user to the docker group, you may see the following error, which indicates that your ~/.docker/ directory was created with incorrect permissions due to the sudo commands.
+```
+WARNING: Error loading config file: /home/user/.docker/config.json -
+stat /home/user/.docker/config.json: permission denied
+```
+To fix this problem, either remove the `~/.docker/` directory (it is recreated automatically, but any custom settings are lost), or change its ownership and permissions using the following commands:
+```
+sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+sudo chmod g+rwx "/home/$USER/.docker" -R
+```
+
+### Perlbrew (required for serotypefinder)
+TO-DO: THESE COMMANDS NEED TO BE ADJUSTED - PROBABLY BETTER TO SOURCE .BASHRC 
+```
+curl -L https://install.perlbrew.pl | bash
+nano ~/.profile
+paste: source ~/perl5/perlbrew/etc/bashrc
+. .profile
+perlbrew --sudo install-cpanm
+nano $HOME/.bash_vars
+# add the following: export PERL5LIB=$PERL5LIB:/lib
+```
+
+----------- END ------------------
+--Everything below is from the image info google-doc, it may or may not work when installing using these directions---
 
 ### serotypefinder
 Setting up SerotypeFinder
@@ -200,16 +302,6 @@ Linux (Ubuntu 16.04.3) Installation Commands for Programs
 to the end of .bashrc:
 . $HOME/.bash_vars
 
-##### Install perlbrew
-```
-curl -L https://install.perlbrew.pl | bash
-nano ~/.profile
-paste: source ~/perl5/perlbrew/etc/bashrc
-. .profile
-perlbrew --sudo install-cpanm
-nano $HOME/.bash_vars
-add the following: export PERL5LIB=$PERL5LIB:/lib
-```
 
 ##### BLAST+
 ```
