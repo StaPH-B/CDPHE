@@ -10,12 +10,12 @@ To do:
 | -------- | ------- | ------------------------------------------- | -------- |
 | SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
 | CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
-| Kraken | x.x.x | | |
-| SPAdes | 3.12.0 | | |
+| Kraken | x.x.x | | https://github.com/DerrickWood/kraken |
+| SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
 | Mash | x.x.x | | |
 | SerotypeFinder | x.x.x | | |
-| SeqSero | x.x.x | | |
+| SeqSero | x.x.x | | https://github.com/denglab/SeqSero |
 | SISTR | x.x.x | | |
 | ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
 
@@ -23,13 +23,13 @@ To do:
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
 | Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
-| Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary |
+| Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
 | raxml | x.x.x | | |
 
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
-| Docker CE | x.x.x | | |
+| Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
 | Perlbrew | x.x.x | | |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
 
@@ -207,8 +207,9 @@ Install instructions tested? NO
 
 ### SeqSero
 ```
-git clone https://github.com/denglab/SeqSero.git
 sudo apt-get install python-biopython
+git clone https://github.com/denglab/SeqSero.git
+
 ```
 python already at 2.7
 
@@ -306,6 +307,9 @@ sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank ma
 sudo cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
 # OR install latest Roary version available through CPAN using:
 # sudo cpanm -f Bio::Roary
+
+# The following perl module dependencies might be required, so go ahead and install with:
+sudo cpanm LWP::Simple Text::CSV JSON File::Slurp
 ```
 You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.`
 It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
