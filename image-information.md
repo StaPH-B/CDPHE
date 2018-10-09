@@ -22,7 +22,7 @@ To do:
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
-| Prokka | x.x.x | | |
+| Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
 | Roary | x.x.x | | |
 | raxml | x.x.x | | |
 
@@ -36,7 +36,7 @@ To do:
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
   * This guide assumes the user has root access, if necessary.
-  * 
+  * This guide was written and tested using a clean install of Ubuntu 16.04-LTS on a Google Cloud Platform Compute Instance Virtual Machine. 
 
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
@@ -191,61 +191,62 @@ pip install sistr_cmd
 Install instructions tested?
 
 ### ABRicate
-git clone https://github.com/tseemann/abricate.git
+```
+# install dependencies
+sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip \
+  libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
 
-##### Source
-If you install from source, Abricate has the following package dependencies:
-* EMBOSS for `seqret`
-* BLAST+ >2.3.0 for `blastn`, `makeblastdb`, `blastdbcmd`
-* Decompression tools `gzip` and `unzip`
-* Perl modules: `LWP::Simple`, `Text::CSV`, `Bio::Perl`, `JSON`, `File::Slurp`
+cd ~/downloads
+wget https://github.com/tseemann/abricate/archive/v0.8.7.tar.gz
+tar -zxf v0.8.7.tar.gz
+rm -rf v0.8.7.tar.gz
 
-These are easy to install on an Ubuntu-based system:
-```bash
-sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
-git clone https://github.com/tseemann/abricate.git
-./abricate/bin/abricate --check
-./abricate/bin/abricate --setupdb
-./abricate/bin/abricate ./abricate/test/assembly.fa
+nano ~/.bashrc
+# add this line to the end of your ~/.bashrc:
+export PATH=$PATH:~/downloads/abricate-0.8.7/bin
+# refresh your shell by either logging out and back in, or run:
+source ~/.bashrc
+# test the install with:
+which abricate
+# should output the full path to /abricate-0.8.7/bin
+# check dependencies with:
+abricate --check
+# index the databases with:
+abricate --setupdb
+# list databases with:
+abricate --list
+
+# Test abricate works by running it on included test dataset: assembly.fa 
+abricate ~/downloads/abricate-0.8.7/test/assembly.fa >abricate-test-output.tab
+# View output file with:
+more abricate-test-output.tab
 ```
-OR
-```
-sudo apt-get install emboss bioperl gzip unzip libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
-git clone https://github.com/tseemann/abricate.git
-./abricate/bin/abricate --check
-./abricate/bin/abricate --setupdb
-./abricate/bin/abricate ./abricate/test/assembly.fa
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/abricate/bin
-cd 
-. .bash_vars
-```
-Install instructions tested?
+Install instructions tested? YES
 
 
 ### prokka
 ```
-cd downloads
 sudo apt-get install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
-git clone https://github.com/tseemann/prokka.git
-cd prokka
-bin/prokka --setupdb
-```
 
-##### Github - install from source code
-Choose somewhere to put it, for example in your home directory (no root access required):
-```bash
-cd $HOME
+cd ~/downloads
+wget https://github.com/tseemann/prokka/archive/v1.13.3.tar.gz
+tar -xzf v1.13.3.tar.gz
+rm -rf v1.13.3.tar.gz
+
+nano ~/.bashrc
+# add this line to the end of your ~/.bashrc:
+export PATH=$PATH:~/downloads/prokka-1.13.3/bin
+# refresh your shell by either logging out and back in, or run:
+source ~/.bashrc
+# test the install with:
+which prokka
+# should output the full path to /prokka-1.13.3/bin
+# index the databases with:
+prokka --setupdb
+# list databases with:
+prokka --listdb
 ```
-Clone the latest version of the repository:
-```bash
-git clone https://github.com/tseemann/prokka.git
-```
-Index the sequence databases
-```bash
-prokka/bin/prokka --setupdb
-```
-Install instructions tested?
+Install instructions tested? YES
 
 ### roary
 ```
