@@ -1,7 +1,6 @@
 To do:
   * change serotypefinder install instructions to the ones I used for installing it into Docker
   * delete redundant sections
-  * change order to reflect that of the type_pipe script
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
   * add install instructions for Basemount
 
@@ -15,7 +14,7 @@ To do:
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
 | Mash | x.x.x | | |
 | SerotypeFinder | x.x.x | | |
-| SeqSero | x.x.x | | https://github.com/denglab/SeqSero |
+| SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
 | SISTR | x.x.x | | |
 | ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
 
@@ -32,6 +31,7 @@ To do:
 | Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
 | Perlbrew | x.x.x | | |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
+| Basemount | | | |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
@@ -189,48 +189,74 @@ Sudo ./configure --prefix=/opt/mash
 Install instructions tested? NO
 
 ### SerotypeFinder
-TO-DO: ADD INSTRUCTIONS FOR GETTING SEROTYPEFINDER DATABASE FROM MY DOCKER REPO
+TO-DO: FIX AND FINISH THIS SECTION. MIGHT NOT NEED PERLBREW OR PERLv5.23.0 TO RUN PROPERLY
 ```
-ssh-keygen
-save key in default location
-don't give password
-copy /home/staphb/.ssh/id_rsa.pub into bitbucket account @ https://bitbucket.org/account/user/your-username-here/ssh-keys/
-git clone https://bitbucket.org/genomicepidemiology/serotypefinder.git
-cd serotypefinder
-./INSTALL_DB database
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/serotypefinder
-cd 
-. .bash_vars
+sudo apt-get update
+sudo apt-get install expat apache2 make wget curl git python bzip2 gcc libextutils-pkgconfig-perl libgd-perl 
+
+# install perlbrew
+curl -L http://install.perlbrew.pl | bash
+source ~/perl5/perlbrew/etc/bashrc
+perlbrew init
+
+nano ~/.bashrc
+# add the following line to the end of your .bashrc
+source ~/perl5/perlbrew/etc/bashrc
+# save, exit, refresh your shell by logging out and in or run:
+source ~/.bashrc
+
+perlbrew install perl-5.23.0
+perlbrew switch perl-5.23.0
+perlbrew install-cpanm
+
+# download serotypefinder.pl from my github repo (CGE removed this older version of SerotypeFinder from their Bitbucket repo)
+mkdir ~/downloads/serotypefinder
+cd ~/downloads/serotypefinder
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/serotypefinder.pl
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/README.md
+chmod +x serotypefinder.pl
+
+# download legacy blast from my docker-auto-builds repo and move it to /opt
+mkdir ~/github
+cd ~/github
+git clone https://github.com/StaPH-B/docker-auto-builds.git
+cd docker-auto-builds/serotypefinder
+sudo cp -r blast-2.2.26/ /opt/
+
+# install perl modules (perl dependencies)
+sudo cpanm inc::latest Module::Build \
+ Data::Dumper \
+ Getopt::Long \
+ Try::Tiny::Retry \
+ File::Temp \
+ Clone \
+ Convert::Binary::C \
+ HTML::Entities \
+ Data::Stag \
+ Test::Most \
+ CJFIELDS/BioPerl-1.6.924.tar.gz --force
+
 ```
 Install instructions tested? NO
 
 ### SeqSero
 ```
 sudo apt-get install python-biopython
-git clone https://github.com/denglab/SeqSero.git
+wget https://github.com/denglab/SeqSero/archive/v1.0.1.tar.gz
+tar -xzf v1.0.1.tar.gz
+rm -rf v1.0.1.tar.gz
 
+nano ~/.bashrc
+# add the following line to your .bashrc
+export PATH=$PATH:~/downloads/SeqSero-1.0.1
+# log out and back in, or refresh your .bashrc
+source ~/.bashrc
+# test that SeqSero.py is in your path with:
+which SeqSero.py
+# test help options with 
+SeqSero.py --help
 ```
-python already at 2.7
-
-bwa already installed
-
-samtools already installed
-
-did not install isPcr
-
-OR
-
-```
-cd downloads
-git clone https://github.com/denglab/SeqSero.git
-sudo apt-get install python-biopython
-nano $HOME/.bash_vars
-add the following: export PATH=$PATH:/home/staphb/downloads/SeqSero
-cd 
-. .bash_vars
-```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SISTR
 ```
@@ -397,59 +423,6 @@ Install instructions tested? NO
 ----------- END ------------------
 
 --Everything below is from the image info google-doc, it may or may not work when installing using these directions---
-
-### serotypefinder
-Setting up SerotypeFinder
-Go to wanted location for resfinder
-`cd /path/to/some/dir`
-Clone and enter the mlst directory
-```
-git clone https://bitbucket.org/genomicepidemiology/serotypefinder.git
-cd plasmidfinder
-```
-
-Installing up the SerotypeFinder database
-```
-cd /path/to/serotypefinder
-./INSTALL_DB database
-```
-
-Check all DB scripts works, and validate the database is correct
-```
-./UPDATE_DB database
-./VALIDATE_DB database
-```
-
-Installing dependencies:
-Perlbrew is used to manage isolated perl environments. To install it run:
-`bash brew.sh`
-
-This will installed Perl 5.23 in the Home folder, along with CPAN minus as package manager. Blast will also be installed when running brew.sh if BlastAll and FormatDB are not already installed and place in the user's path. After running brew.sh and installing Blast add this command to the end of your ~/bash_profile to add BlastAll and FormatDB to the user's path
-export PATH=$PATH:blast-2.2.26/bin
-
-If you want to download the two external tools from the Blast package, BlastAll and FormatDB, yourself go to
-ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/LATEST
-
-and download the version for your OS with the format:
-blast-version-architecture-OS.tar.gz
-
-after unzipping the file, add this command to the end of your ~/bash_profile.
-export PATH=$PATH:/path/to/blast-folder/bin
-
-where path/to/blast-folder is the folder you unzipped.
-At last SerotypeFinder has several Perl dependencies. To install them (this requires CPAN minus as package manager):
-make install
-
-The scripts are self contained. You just have to copy them to where they should be used. Only the database folder needs to be updated manually.
-Remember to add the program to your system path if you want to be able to invoke the program without calling the full path. If you don't do that you have to write the full path to the program when using it.
-
-
-
-Linux (Ubuntu 16.04.3) Installation Commands for Programs
-
-to the end of .bashrc:
-. $HOME/.bash_vars
-
 
 ##### BLAST+
 ```
