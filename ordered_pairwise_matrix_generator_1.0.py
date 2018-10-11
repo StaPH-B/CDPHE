@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 #This script takes in an ordered file and then returns a pairwise matrix based on that order.
 #Usage (must be run from directory above lyveset): ordered_pairwise_matrix_generator.py /path/to/ordered/file
+#Last updated: 05/10/18
 import argparse, sys, os
 cwd = os.getcwd()
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', help='input file as an ordered list of the isolates.')
 pairwiseFile = str(cwd)+'/lyveset/msa/out.pairwise.tsv'
-inputFile = sys.argv[1]
+parser.add_argument('-p', dest='pairwise', help='a pairwise list of all possible combinations in pairwise matrix.', default=pairwiseFile)
+parser.add_argument('-i', dest='inputFile', help='input file; text file as an ordered list of the isolates.')
+parser.add_argument('-pm', dest='pairwiseMatrix', help='a pairwise matrix of all snps between isolates of interest.')
+args = parser.parse_args()
 
 #Create a pairwise dictionary with all values possible, and create a list of the isolates
 pairwiseDict = {}
 isolates = []
-f = open(pairwiseFile, 'r')
+f = open(args.pairwise, 'r')
 flines  = f.readlines()
 for line in flines:
+    print line
     line = line.strip('\n')
     linesplit = line.split('\t')
     pairwiseDict[linesplit[0], linesplit[1]] = linesplit[2]
@@ -26,7 +30,7 @@ f.close()
 
 #Take in the ordered list created by the user and create a list object
 orderedList = []
-g = open(inputFile, 'r')
+g = open(args.inputFile, 'r')
 glines = g.readlines()
 for line in glines:
     line = line.strip('\n')
