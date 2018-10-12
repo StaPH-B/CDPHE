@@ -88,17 +88,22 @@ for i in *R1_001.fastq.gz; do
         remove_file clean/${b}.fastq;
     fi
 done
-for i in *_1.fastq.gz; do
-    b=`basename ${i} _1.fastq.gz`;
-    if [[ -n "$(find -path ./clean/${b}.cleaned.fastq.gz)" ]]; then
-        continue
-    else
-        run_assembly_shuffleReads.pl ${b}"_1.fastq.gz" ${b}"_2.fastq.gz" > clean/${b}.fastq;
-        echo ${b};
-        run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
-        remove_file clean/${b}.fastq;
-    fi
-done
+if [ -s "SRR" ]; then
+    for j in *_1.fastq.gz; do
+        c=`basename ${j} _1.fastq.gz`;
+        if [[ -n "$(find -path ./clean/${c}.cleaned.fastq.gz)" ]]; then
+            continue
+        else
+            echo "WHAT DO YOU EVEN THINK C IS? "${c}
+            run_assembly_shuffleReads.pl ${c}"_1.fastq.gz" ${c}"_2.fastq.gz" > clean/${c}.fastq;
+            echo ${c};
+            run_assembly_trimClean.pl -i clean/${c}.fastq -o clean/${c}.cleaned.fastq.gz --nosingletons;
+            remove_file clean/${c}.fastq;
+        fi
+    done
+else
+    echo "There are no SRR numbers in this run"
+fi
 remove_file ./clean/\**
 
 ##### Kraken is called here as a contamination check #####
@@ -271,7 +276,7 @@ done
 echo 'FINISHED RUNNING ABRICATE'
 
 #####Create a file with all the relevant run info
-rm isolate_info_file
+remove_file isolate_info_file
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
 echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file
 for i in ${id[@]}; do
