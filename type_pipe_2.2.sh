@@ -296,7 +296,7 @@ echo 'FINISHED RUNNING ABRICATE'
 #####Create a file with all the relevant run info
 remove_file isolate_info_file.tsv
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
-echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file
+echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file.tsv
 for i in ${id[@]}; do
     qc_metric=$(grep "${i}" ./clean/readMetrics.tsv)
     contigs=$(tail -9 ./quast/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
