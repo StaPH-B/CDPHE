@@ -4,6 +4,18 @@
 #Permission to copy and modify is granted without warranty of any kind
 #Last revised 09/08/18 - LDF
 
+#Set all the variables that need to be set
+while test $# -gt 0
+do
+    case $1 in
+        -l)
+            SEQUENCE_LEN=$2
+            shift
+            ;;
+    esac
+    shift
+done
+
 #This function will check if the file exists before trying to remove it
 remove_file () {
     if [[ $1=~"/" ]]; then
@@ -36,6 +48,12 @@ make_directory () {
         fi;
     fi
 }
+
+if [ -z "$SEQUENCE_LEN" ]; then
+    SEQUENCE_LEN=5000000
+fi
+echo "Sequence Length: $SEQUENCE_LEN"
+
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
 if [[ -n "$(find ./fastq_files)" ]]; then
     mv ./fastq_files/* .
@@ -132,11 +150,11 @@ done
 ##### Run Quality and Coverage Metrics #####
 ## check to see if the run quality and coverage metrics have already been completed or not
 for i in ${id[@]}; do
-    if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then 
+    if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
 		echo 'Run quality and coverage metrics have been generated'
 	else
 		echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-		run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e 5000000| sort -k3,3n > ./clean/readMetrics.tsv
+		run_assembly_readMetrics.pl ./clean/*.fastq.gz --fast --numcpus 12 -e "$SEQUENCE_LEN"| sort -k3,3n > ./clean/readMetrics.tsv
 	fi
 done
 
@@ -276,7 +294,7 @@ done
 echo 'FINISHED RUNNING ABRICATE'
 
 #####Create a file with all the relevant run info
-remove_file isolate_info_file
+remove_file isolate_info_file.tsv
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
 echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file
 for i in ${id[@]}; do
@@ -301,7 +319,7 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
     echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
 done
 
@@ -315,3 +333,6 @@ for i in ${id[@]}; do
         mv *$i*fastq.gz fastq_files
     fi
 done
+echo "********************************"
+echo "type_pipe pipeline has finished."
+echo "********************************"
