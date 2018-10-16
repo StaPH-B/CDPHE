@@ -1,8 +1,16 @@
 #!/bin/bash
-#USAGE: -n and then specify the sequencing run number.  The script will copy
-#all the E. coli, campy, shigella, listeria, vibrio pseudomonas isolates from
-#their respective basepace folder, run CG_pipeline to clean the reads, then it
-#runs the read metric script from the clean folder
+#USAGE: From the home directory (/home/staphb/) run:
+# quality_and_coverage_X.X.sh  \
+#                            -n xxx  \  #to specify the sequencing run number
+#                            -l x       #to specify the sequencing run letter (if there is one)
+#
+#The script will copy all the E. coli, campy, shigella, listeria, vibrio, and
+#pseudomonas isolates from their respective basepace folder, run CG_pipeline
+#to clean the reads, then it runs the read metric script from the clean folder.
+#
+#This script will also call the run_type_pipe_X.X.sh script to run the cleaned
+#reads through Kraken, Mash, SPAdes, QUAST, SeqSero, SISTR, Serotypefinder, and
+#abricate
 
 #Go through a parameters file with a line for each: species,genomesize,extension
 declare -a spp_variables=()
