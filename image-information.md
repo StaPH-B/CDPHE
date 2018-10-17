@@ -8,14 +8,14 @@ To do:
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | -------- |
 | SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
-| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
+| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
 | Kraken | x.x.x | | https://github.com/DerrickWood/kraken |
 | SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
-| Mash | x.x.x | | |
-| SerotypeFinder | x.x.x | | |
+| Mash | x.x.x | | https://github.com/marbl/Mash |
+| SerotypeFinder | x.x.x | | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
 | SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
-| SISTR | x.x.x | | |
+| SISTR | x.x.x | | https://github.com/peterk87/sistr_cmd |
 | ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
@@ -23,15 +23,15 @@ To do:
 | -------- | ------- | ------------------------------------------- | ---- |
 | Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
 | Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
-| raxml | x.x.x | | |
+| raxml | x.x.x | | I think? https://github.com/stamatak/standard-RAxML |
 
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
 | Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| Perlbrew | x.x.x | | |
+| Perlbrew | x.x.x | | https://perlbrew.pl/ |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
-| Basemount | | | |
+| Basemount | | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
