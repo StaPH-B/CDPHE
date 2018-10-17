@@ -259,8 +259,27 @@ SeqSero.py --help
 Install instructions tested? YES
 
 ### SISTR
+I *think* these commands will work, but as I mentioned below, I need to test on a clean Ubuntu VM to make sure it works.
+```
+sudo apt-get install python-pip python-dev build-essential
+python -m pip install --user --upgrade pip
+python -m pip install --user wheel numpy pandas
+python -m pip install --user sister_cmd
+# test install and get version with:
+sistr -V
+# get help options with:
+sistr -h
+```
+
+These commands did NOT work. I've read that using `sudo` with pip is a BAD idea, and the second line below also upgrades the system `pip` which causes all sorts of errors. Above are commands that I *think* will work, but I need another clean install of Ubuntu to test against.
+
+General advice for solving pip issues and links to solutions: https://github.com/pypa/pip/issues/5599
+  * do NOT use `sudo` when using pip
+  * it is a good idea to follow `pip` commands with `--user`
+  * avoid upgrading system `pip`, if so, use the system package manager to do so (i.e. `apt or apt-get`)
 ```
 sudo apt-get install python-pip python-dev build-essential 
+# The below line is a BAD way to upgrade system pip
 sudo pip install --upgrade pip
 pip install wheel
 sudo pip install numpy pandas
