@@ -98,11 +98,17 @@ sudo cpanm URI::Escape \
            Bio::FeatureIO
 cd ~/downloads/lyve-SET-
 make install
-
 # If 'make install' fails, I find it best to delete the entire lyve-set directory, re-extract
 # from the tarball and to re-run 'make install' from the lyve-set directory again. 'make install'
 # does not like to be run more than once because it tries to create files that it already created
 # and then fails because those files are there.
+nano ~/.bashrc
+# add both of the following lines to the bottom of ~/.bashrc
+export PATH=$PATH:~/downloads/lyve-SET-2.0.1/scripts
+export PATH=$PATH:~/downloads/lyve-SET-2.0.1/lib/edirect
+# save and close file
+# refresh .bashrc with:
+source ~/.bashrc
 ```
 Install instructions tested? YES
 
