@@ -67,7 +67,8 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 ```
 Install instructions tested? YES 
 
-### CG-pipeline/Lyve-SET/raxml
+### Lyve-SET/CG-pipeline/raxml
+Installing Lyve-SET will also install the scripts from CG-pipeline that we use for cleaning the reads, and will also install raxml. So here's how to install Lyve-SET:
 #### Lyve-SET
 ```
 sudo apt-get update
