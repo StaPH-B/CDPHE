@@ -1,21 +1,19 @@
 To do:
-  * change serotypefinder install instructions to the ones I used for installing it into Docker
-  * delete redundant sections
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions for Basemount
+  * add install instructions (and test) for Basemount, Kraken, Mash
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | -------- |
 | SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
-| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
+| Lyve-SET (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
 | Kraken | x.x.x | | https://github.com/DerrickWood/kraken |
 | SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
 | Mash | x.x.x | | https://github.com/marbl/Mash |
-| SerotypeFinder | x.x.x | | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
+| SerotypeFinder | unknown (not listed on their bitbucket) | | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
 | SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
-| SISTR | x.x.x | | https://github.com/peterk87/sistr_cmd |
+| SISTR | 1.0.2 | | https://github.com/peterk87/sistr_cmd |
 | ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
@@ -23,14 +21,13 @@ To do:
 | -------- | ------- | ------------------------------------------- | ---- |
 | Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
 | Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
-| raxml | x.x.x | | I think? https://github.com/stamatak/standard-RAxML |
+| raxml | x.x.x | | We use the raxml that comes with Lyve-SET, but original repo is here: https://github.com/stamatak/standard-RAxML |
 
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
 | Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| Perlbrew | x.x.x | | https://perlbrew.pl/ |
-| Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
+| Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
 | Basemount | | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
@@ -70,9 +67,44 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 ```
 Install instructions tested? YES 
 
-### CG-pipeline/Lyve-SET
+### CG-pipeline/Lyve-SET/raxml
+#### Lyve-SET
+```
+sudo apt-get update
+sudo apt-get install perl\
+                     libfile-slurp-perl\
+                     openjdk-9-jre\
+                     bioperl\
+                     wget\
+                     libz-dev\
+                     git\
+                     libncurses5-dev\
+                     libncursesw5-dev\
+                     build-essential\
+                     ncbi-blast+\
+                     libsvn-perl\
+                     subversion\
+                     libsvn1\
+                     automake1.11\
+                     libpthread-stubs0-dev
+cd ~/downloads
+wget https://github.com/lskatz/lyve-SET/archive/v2.0.1.tar.gz
+tar -zxf v2.0.1.tar.gz
+rm -rf v2.0.1.tar.gz
+sudo cpanm URI::Escape \
+           File::Slurp \
+           String::Escape \
+           Test::Most \
+           Bio::FeatureIO
+cd ~/downloads/lyve-SET-
+make install
 
-Install instructions tested? NO
+# If 'make install' fails, I find it best to delete the entire lyve-set directory, re-extract
+# from the tarball and to re-run 'make install' from the lyve-set directory again. 'make install'
+# does not like to be run more than once because it tries to create files that it already created
+# and then fails because those files are there.
+```
+Install instructions tested? YES
 
 ### Kraken
 jellyfish
@@ -189,25 +221,26 @@ Sudo ./configure --prefix=/opt/mash
 Install instructions tested? NO
 
 ### SerotypeFinder
-TO-DO: FIX AND FINISH THIS SECTION. MIGHT NOT NEED PERLBREW OR PERLv5.23.0 TO RUN PROPERLY
 ```
 sudo apt-get update
 sudo apt-get install expat apache2 make wget curl git python bzip2 gcc libextutils-pkgconfig-perl libgd-perl 
 
-# install perlbrew
-curl -L http://install.perlbrew.pl | bash
-source ~/perl5/perlbrew/etc/bashrc
-perlbrew init
+#UPDATE - perlbrew not needed for serotypefinder to work. Ubuntu system perl is v5.22.1 and that works great!
+#DO NOT RUN LINES BELOW WITH 3 #'S
+### install perlbrew
+###curl -L http://install.perlbrew.pl | bash
+###source ~/perl5/perlbrew/etc/bashrc
+###perlbrew init
 
-nano ~/.bashrc
+###nano ~/.bashrc
 # add the following line to the end of your .bashrc
-source ~/perl5/perlbrew/etc/bashrc
+###source ~/perl5/perlbrew/etc/bashrc
 # save, exit, refresh your shell by logging out and in or run:
-source ~/.bashrc
+###source ~/.bashrc
 
-perlbrew install perl-5.23.0
-perlbrew switch perl-5.23.0
-perlbrew install-cpanm
+###perlbrew install perl-5.23.0
+###perlbrew switch perl-5.23.0
+###perlbrew install-cpanm
 
 # download serotypefinder.pl from my github repo (CGE removed this older version of SerotypeFinder from their Bitbucket repo)
 mkdir ~/downloads/serotypefinder
@@ -235,9 +268,8 @@ sudo cpanm inc::latest Module::Build \
  Data::Stag \
  Test::Most \
  CJFIELDS/BioPerl-1.6.924.tar.gz --force
-
 ```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SeqSero
 ```
@@ -363,6 +395,7 @@ It is a benign warning according to the developer of Roary: https://github.com/s
 Install instructions tested? YES
 
 ### raxml
+Installed via Lyve-SET.
 
 Install instructions tested? NO
 
@@ -416,47 +449,9 @@ sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
 Install instructions tested? YES
 
-### Perlbrew (required for serotypefinder)
-TO-DO: THESE COMMANDS NEED TO BE ADJUSTED - PROBABLY BETTER TO SOURCE .BASHRC 
-```
-curl -L https://install.perlbrew.pl | bash
-nano ~/.profile
-paste: source ~/perl5/perlbrew/etc/bashrc
-. .profile
-perlbrew --sudo install-cpanm
-nano $HOME/.bash_vars
-# add the following: export PERL5LIB=$PERL5LIB:/lib
-```
-Install instructions tested? NO
-
-### BLAST+ Legacy (v2.2.26) for SerotypeFinder
-```
-# git clone files for blast-legacy from git repo containing dockerfile for serotypefinder
-# move to /opt
-# make sure that the blast executables are in the $PATH
-which formatblastdb
-# should result in:
-/opt/blast-2.2.26/bin
-```
-Install instructions tested? NO
-
 ----------- END ------------------
 
 --Everything below is from the image info google-doc, it may or may not work when installing using these directions---
-
-##### BLAST+
-```
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install build-essential
-sudo apt-get install liblmdb-dev
-mkdir ncbi-blast+
-cd ncbi-blast+/
-wget -N ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-1.x86_64.rpm
-sudo apt-get install alien
-sudo alien -i ncbi-blast-2.6.0+-1.x86_64.rpm
-```
-
 
 ### Lyve-set
 ```
@@ -525,15 +520,4 @@ cd Mash
 sudo ./configure --prefix=/opt/mash/
 Sudo make
 sudo make install
-```
-
-### Roary
-```
-git clone https://github.com/sanger-pathogens/Roary.git
-sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank mafft fasttree
-sudo cpanm -f Bio::Roary
-cpanm LWP::Simple
-cpanm Text::CSV
-cpanm JSON
-cpanm File::Slurp
 ```
