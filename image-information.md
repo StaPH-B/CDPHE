@@ -262,16 +262,17 @@ Install instructions tested? YES
 I *think* these commands will work, but as I mentioned below, I need to test on a clean Ubuntu VM to make sure it works.
 ```
 sudo apt-get install python-pip python-dev build-essential
-python -m pip install --user --upgrade pip
-python -m pip install --user wheel numpy pandas
-python -m pip install --user sister_cmd
+python -m pip install --upgrade pip
+python -m pip install wheel numpy pandas
+python -m pip install sistr_cmd
 # test install and get version with:
 sistr -V
 # get help options with:
 sistr -h
 ```
+Install instructions tested? YES
 
-These commands did NOT work. I've read that using `sudo` with pip is a BAD idea, and the second line below also upgrades the system `pip` which causes all sorts of errors. Above are commands that I *think* will work, but I need another clean install of Ubuntu to test against.
+The commands for installing SISTR below did NOT work. I've read that using `sudo` with pip is a BAD idea, and the second line below also upgrades the system `pip` which causes all sorts of errors. Above are commands that I *think* will work, but I need another clean install of Ubuntu to test against.
 
 General advice for solving pip issues and links to solutions: https://github.com/pypa/pip/issues/5599
   * do NOT use `sudo` when using pip
