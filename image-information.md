@@ -92,7 +92,9 @@ cd ~/downloads
 wget https://github.com/lskatz/lyve-SET/archive/v2.0.1.tar.gz
 tar -zxf v2.0.1.tar.gz
 rm -rf v2.0.1.tar.gz
-sudo cpanm URI::Escape \
+
+# try installing perl modules without sudo first, then if it fails try with sudo
+(sudo) cpanm URI::Escape \
            File::Slurp \
            String::Escape \
            Test::Most \
