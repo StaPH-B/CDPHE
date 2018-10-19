@@ -206,7 +206,6 @@ which quast.py
 
 # test the install with
 sudo ./setup.py test
-
 ```
 Install instructions tested? YES
 
@@ -228,7 +227,7 @@ This will install `capnp`, the Cap’n Proto command-line tool. It will also ins
 sudo apt-get install libgsl-dev
 sudo apt-get install libgsl2
 sudo apt-get install autoconf
-Sudo ./configure --prefix=/opt/mash
+sudo ./configure --prefix=/opt/mash
 ```
 Install instructions tested? NO
 
@@ -393,24 +392,30 @@ Install instructions tested? YES
 
 ### Roary
 ```
-sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank mafft fasttree
-# install Roary version 3.12.0 specifically
-sudo cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
-# OR install latest Roary version available through CPAN using:
-# sudo cpanm -f Bio::Roary
-
+sudo apt-get install bedtools \
+                     cd-hit \
+                     ncbi-blast+ \
+                     mcl \
+                     parallel \
+                     prank \
+                     mafft \
+                     fasttree
 # The following perl module dependencies might be required, so go ahead and install with:
-sudo cpanm LWP::Simple Text::CSV JSON File::Slurp
+cpanm LWP::Simple \
+      Text::CSV \
+      JSON \
+      File::Slurp
+      
+# install Roary version 3.12.0 specifically
+cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
+
+# OR install latest Roary version available through CPAN using:
+cpanm -f Bio::Roary
 ```
 You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.`
 It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
 
 Install instructions tested? YES
-
-### raxml
-Installed via Lyve-SET.
-
-Install instructions tested? NO
 
 ### Docker CE
 ```
@@ -465,55 +470,6 @@ Install instructions tested? YES
 ----------- END ------------------
 
 --Everything below is from the image info google-doc, it may or may not work when installing using these directions---
-
-### Lyve-set
-```
-cpanm File::Slurp
-cpanm URI::Escape
-sudo cpanm Bio::FeatureIO
-sudo apt-get install libz-dev
-sudo apt-get install unzip
-sudo apt-get install libncurses5-dev
-wget https://github.com/lskatz/lyve-SET/archive/v2.0.1.tar.gz
-cd /opt/
-mkdir Lyve-SET/
-sudo tar -xvzf ~/v2.0.1.tar.gz
-cd lyve-SET-2.0.1
-sudo make install
-cd /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1 
-sudo make
-```
-Had to update the sym links manually:
-```
-cd /opt/Lyve-SET/lyve-SET-2.0.1/scripts
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/bcftools-1.3.1/bcftools bcftools
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1/bgzip bgzip
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_isFastqPE.pl run_assembly_isFastqPE.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_metrics.pl run_assembly_metrics.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_readMetrics.pl run_assembly_readMetrics.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_removeDuplicateReads.pl run_assembly_removeDuplicateReads.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_shuffleReads.pl run_assembly_shuffleReads.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_trimClean.pl run_assembly_trimClean.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/samtools samtools
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1/tabix tabix
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/vcftools_0.1.12b/perl/vcf-sort vcf-sort
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/bcftools-1.3.1/vcfutils.pl vcfutils.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/misc/wgsim wgsim
-nano $HOME/.bash_vars
-# add the following to .bash_vars: 
-export PATH=/opt/Lyve-SET/lyve-SET-2.0.1/scripts:$PATH
-```
-
-### Jellyfish
-```
-cd downloads
-wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
-tar -xvzf jellyfish-1.1.12.tar.gz
-cd jellyfish-1.1.12
-./configure --prefix=/opt/
-make -j 4
-sudo make install
-```
 
 ### Install mash/capnproto
 ```
