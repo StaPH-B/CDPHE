@@ -7,7 +7,7 @@ To do:
 | -------- | ------- | ------------------------------------------- | -------- |
 | SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
 | Lyve-SET (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
-| Kraken | x.x.x | | https://github.com/DerrickWood/kraken |
+| Kraken | 1.0 | | https://github.com/DerrickWood/kraken |
 | SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
 | Mash | x.x.x | | https://github.com/marbl/Mash |
@@ -116,36 +116,39 @@ source ~/.bashrc
 Install instructions tested? YES
 
 ### Kraken
-jellyfish
-
-download 1.1.11 into downloads folder
-
-installed into `/opt/jellyfish`
-
-kraken
-
-cloned github into downloads
-
-installed into `/opt/kraken`
+#### Jellyfish install
+Jellyfish must be installed prior to installing Kraken.
+```
+cd ~/downloads
+wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
+tar -zxf jellyfish-1.1.12.tar.gz
+rm -rf jellyfish-1.1.12.tar.gz
+cd jellyfish-1.1.12
+./configure --prefix=/opt/
+make -j 4
+sudo make install
+```
+#### Kraken install
 ```
 sudo apt-get install zlib1g-dev
-./configure --prefix=/opt/mash
-
-git clone https://github.com/DerrickWood/kraken.git
-sudo ./install_kraken.sh /opt/kraken/
-```
-OR
-```
-cd downloads
-sudo git clone https://github.com/DerrickWood/kraken.git
-cd kraken
+cd ~/downloads
+wget https://github.com/DerrickWood/kraken/archive/v1.0.tar.gz
+tar -xzf v1.0.tar.gz
+cd kraken-1.0
 sudo mkdir /opt/kraken
 sudo ./install_kraken.sh /opt/kraken/
-nano $HOME/.bash_vars
-# add the following: export PATH=$PATH:/opt/jellyfish/bin
+
+nano ~/.bashrc
+# add the following lines to .bashrc, save, refresh shell by logging in/out
 export PATH=$PATH:/opt/kraken
+export PATH=$PATH:/opt/jellyfish/bin
+
+# test with:
+which kraken
+# or:
+kraken -h
 ```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SPAdes
 ```
