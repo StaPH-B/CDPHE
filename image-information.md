@@ -1,6 +1,6 @@
 To do:
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions (and test) for Basemount, Kraken, Mash
+  * add install instructions (and test) for Basemount, Mash
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
