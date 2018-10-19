@@ -264,7 +264,8 @@ cd docker-auto-builds/serotypefinder
 sudo cp -r blast-2.2.26/ /opt/
 
 # install perl modules (perl dependencies)
-sudo cpanm inc::latest Module::Build \
+# Try installing without sudo first, then if it fails then try sudo.
+(sudo) cpanm inc::latest Module::Build \
  Data::Dumper \
  Getopt::Long \
  Try::Tiny::Retry \
