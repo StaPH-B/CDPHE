@@ -1,6 +1,6 @@
 To do:
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions (and test) for Basemount, Mash
+  * add install instructions (and test) for Basemount
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
@@ -10,7 +10,7 @@ To do:
 | Kraken | 1.0 | | https://github.com/DerrickWood/kraken |
 | SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
 | QUAST | 5.0.0 | | https://github.com/ablab/quast |
-| Mash | x.x.x | | https://github.com/marbl/Mash |
+| Mash | 2.1 | | https://github.com/marbl/Mash |
 | SerotypeFinder | unknown (not listed on their bitbucket) | | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
 | SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
 | SISTR | 1.0.2 | | https://github.com/peterk87/sistr_cmd |
@@ -211,25 +211,20 @@ Install instructions tested? YES
 
 ### Mash
 ```
-git clone https://github.com/marbl/Mash.git
+# These directions are for installing the dependency-free binary version of Mash
+cd ~/downloads
+wget https://github.com/marbl/Mash/releases/download/v2.1/mash-Linux64-v2.1.tar
+tar -xvf mash-Linux64-v2.1.tar
+rm -rf mash-Linux64-v2.1
+nano ~/.bashrc
+# add the following line to your .bashrc
+export PATH=$PATH:~/downloads/mash-Linux64-v2.1
+# save and close, refresh your shell:
+source ~/.bashrc
+# test install with:
+mash
 ```
-You may download and install the release version of Cap’n Proto like so:
-```
-curl -O https://capnproto.org/capnproto-c++-0.6.1.tar.gz
-tar zxf capnproto-c++-0.6.1.tar.gz
-cd capnproto-c++-0.6.1
-./configure
-make -j6 check
-sudo make install
-```
-This will install `capnp`, the Cap’n Proto command-line tool. It will also install `libcapnp`,`libcapnpc`, and `libkj` in `/usr/local/lib` and headers in `/usr/local/include/capnp` and `/usr/local/include/kj`
-```
-sudo apt-get install libgsl-dev
-sudo apt-get install libgsl2
-sudo apt-get install autoconf
-sudo ./configure --prefix=/opt/mash
-```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SerotypeFinder
 ```
@@ -466,27 +461,3 @@ sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
 sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
 Install instructions tested? YES
-
------------ END ------------------
-
---Everything below is from the image info google-doc, it may or may not work when installing using these directions---
-
-### Install mash/capnproto
-```
-cd downloads
-git clone https://github.com/marbl/Mash.git
-curl -O https://capnproto.org/capnproto-c++-0.6.1.tar.gz
-tar -zxf capnproto-c++-0.6.1.tar.gz
-cd capnproto-c++-0.6.1
-./configure
-make -j 6 check
-sudo make install
-sudo apt-get install libgsl-dev
-sudo apt-get install libgsl2
-sudo apt-get install autoconf
-cd Mash
-./bootstrap.sh
-sudo ./configure --prefix=/opt/mash/
-Sudo make
-sudo make install
-```
