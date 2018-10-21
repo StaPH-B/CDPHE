@@ -1,6 +1,6 @@
 To do:
   * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions (and test) for Basemount
+
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | commands used (if not the name of the tool) | Link |
@@ -28,7 +28,7 @@ To do:
 | -------- | ------- | ------------------------------------------- | ---- |
 | Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
-| Basemount | | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
+| Basemount | 0.14 | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
@@ -461,3 +461,15 @@ sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
 sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
 Install instructions tested? YES
+
+### Basemount
+```
+# ensure fusermount is available with:
+fusermount --version
+# if so then:
+sudo bash -c "$(curl -L https://basemount.basespace.illumina.com/install)"
+mkdir ~/Basespace
+basemount Basespace/
+# copy the given link into browser, log in to Basespace with credentials for basespace account
+# now have access to basespace files, reads, etc.
+```
