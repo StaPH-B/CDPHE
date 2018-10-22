@@ -1,5 +1,5 @@
 To do:
-  * show location of various databases (Kraken, Mash, serotypefinder, etc.)
+  * asdf
 
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
@@ -26,7 +26,7 @@ To do:
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | commands used (if not the name of the tool) | Link |
 | -------- | ------- | ------------------------------------------- | ---- |
-| Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
+| Docker CE | 18.06.1-ce | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
 | Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
 | Basemount | 0.14 | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
@@ -148,6 +148,15 @@ which kraken
 # or:
 kraken -h
 ```
+#### DL'ing miniKraken database
+```
+mkdir ~/databases/kraken/minikraken_CURRENT
+cd ~/databases/kraken/minikraken_CURRENT
+wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+tar -xzf minikraken_20171019_4GB.tgz
+# re-name directory to /minikraken_CURRENT so that the type_pipe script can locate the database
+mv minikraken_20171013_4GB/ minikraken_CURRENT/
+```
 Install instructions tested? YES
 
 ### SPAdes
@@ -223,6 +232,15 @@ export PATH=$PATH:~/downloads/mash-Linux64-v2.1
 source ~/.bashrc
 # test install with:
 mash
+```
+#### DL'ing Mash database
+```
+mkdir ~/databases/mash
+cd ~/databases/mash
+wget https://gembox.cbcb.umd.edu/mash/RefSeqSketchesDefaults.msh.gz
+gunzip RefSeqSketchesDefaults.msh.gz
+mkdir refseq_CURRENT
+mv RefSeqSketchesDefaults.msh.gz refseq_CURRENT/
 ```
 Install instructions tested? YES
 
