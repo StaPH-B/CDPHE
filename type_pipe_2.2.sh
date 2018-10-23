@@ -167,6 +167,17 @@ for i in ${id[@]}; do
     else
         echo 'constructing assemblies for '$i', could take some time...'
          spades.py --pe1-12 ./clean/*${i}*.cleaned.fastq.gz -o spades_assembly_trim/${i}/ --careful
+	 rm -rf ./spades_assembly_trim/$i/corrected \
+		./spades_assembly_trim/$i/K21 \
+                ./spades_assembly_trim/$i/K33 \
+                ./spades_assembly_trim/$i/K55 \
+                ./spades_assembly_trim/$i/K77 \
+                ./spades_assembly_trim/$i/K99 \
+                ./spades_assembly_trim/$i/K127 \
+                ./spades_assembly_trim/$i/misc \
+                ./spades_assembly_trim/$i/mismatch_corrector \
+                ./spades_assembly_trim/$i/split_input \
+                ./spades_assembly_trim/$i/tmp
     fi
 done
 
