@@ -3,32 +3,32 @@ To do:
 
 
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | -------- |
-| SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
-| Lyve-SET (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
-| Kraken | 1.0 | | https://github.com/DerrickWood/kraken |
-| SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
-| QUAST | 5.0.0 | | https://github.com/ablab/quast |
-| Mash | 2.1 | | https://github.com/marbl/Mash |
-| SerotypeFinder | unknown (not listed on their bitbucket) | | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
-| SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
-| SISTR | 1.0.2 | | https://github.com/peterk87/sistr_cmd |
-| ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
+| Software | Version | Link |
+| -------- | ------- | -------- |
+| SRA-toolkit | 2.9.2 | https://github.com/ncbi/sra-tools |
+| Lyve-SET (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
+| Kraken | 1.0 | https://github.com/DerrickWood/kraken |
+| SPAdes | 3.12.0 | http://cab.spbu.ru/software/spades/ |
+| QUAST | 5.0.0 | https://github.com/ablab/quast |
+| Mash | 2.1 | https://github.com/marbl/Mash |
+| SerotypeFinder | unknown (not listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
+| SeqSero | 1.0.1 | https://github.com/denglab/SeqSero |
+| SISTR | 1.0.2 | https://github.com/peterk87/sistr_cmd |
+| ABRicate | 0.8.7 | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | ---- |
-| Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
-| Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
-| raxml | x.x.x | | We use the raxml that comes with Lyve-SET, but original repo is here: https://github.com/stamatak/standard-RAxML |
+| Software | Version | Link |
+| -------- | ------- | ---- |
+| Prokka | 1.13.3 | https://github.com/tseemann/prokka |
+| Roary | 3.12.0 | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
+| raxml | x.x.x | We use the raxml that comes with Lyve-SET, but original repo is here: https://github.com/stamatak/standard-RAxML |
 
 ### Other Software/Tools needed (not part of either script listed above)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | ---- |
-| Docker CE | 18.06.1-ce | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
-| Basemount | 0.14 | | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
+| Software | Version | Link |
+| -------- | ------- | ---- |
+| Docker CE | 18.06.1-ce | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
+| Blast+ (legacy version) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
+| Basemount | 0.14 | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
@@ -38,10 +38,11 @@ To do:
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
 ```
+cd ~/downloads
 wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.2/sratoolkit.2.9.2-ubuntu64.tar.gz
 tar -xzf sratoolkit.2.9.2-ubuntu64.tar.gz
 rm -rf sratoolkit.2.9.2-ubuntu64.tar.gz
-mv sratoolkit.2.9.2-ubuntu64/ ~/downloads
+
 nano ~/.bashrc
 # add this line to the end of your ~/.bashrc
 export PATH=$PATH:~/downloads/sratoolkit.2.9.2-ubuntu64/bin
@@ -161,6 +162,7 @@ Install instructions tested? YES
 
 ### SPAdes
 ```
+cd ~/downloads
 wget http://cab.spbu.ru/files/release3.12.0/SPAdes-3.12.0-Linux.tar.gz 
 tar -xzf SPAdes-3.12.0-Linux.tar.gz
 rm -rf SPAdes-3.12.0-Linux.tar.gz
@@ -255,13 +257,11 @@ sudo apt-get install expat apache2 make wget curl git python bzip2 gcc libextuti
 ###curl -L http://install.perlbrew.pl | bash
 ###source ~/perl5/perlbrew/etc/bashrc
 ###perlbrew init
-
 ###nano ~/.bashrc
 # add the following line to the end of your .bashrc
 ###source ~/perl5/perlbrew/etc/bashrc
 # save, exit, refresh your shell by logging out and in or run:
 ###source ~/.bashrc
-
 ###perlbrew install perl-5.23.0
 ###perlbrew switch perl-5.23.0
 ###perlbrew install-cpanm
@@ -299,6 +299,7 @@ Install instructions tested? YES
 ### SeqSero
 ```
 sudo apt-get install python-biopython
+cd ~/downloads
 wget https://github.com/denglab/SeqSero/archive/v1.0.1.tar.gz
 tar -xzf v1.0.1.tar.gz
 rm -rf v1.0.1.tar.gz
