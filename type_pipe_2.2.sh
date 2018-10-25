@@ -334,6 +334,9 @@ for i in ${id[@]}; do
     echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
 done
 
+#rename the summary file
+mv isolate_info_file.tsv isolate_info_${SEQ_NUM}_${species}.tsv
+
 #### Remove the tmp1 file that lingers #####
 remove_file tmp1
 
