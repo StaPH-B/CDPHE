@@ -112,7 +112,6 @@ if [ -s "SRR" ]; then
         if [[ -n "$(find -path ./clean/${c}.cleaned.fastq.gz)" ]]; then
             continue
         else
-            echo "WHAT DO YOU EVEN THINK C IS? "${c}
             run_assembly_shuffleReads.pl ${c}"_1.fastq.gz" ${c}"_2.fastq.gz" > clean/${c}.fastq;
             echo ${c};
             run_assembly_trimClean.pl -i clean/${c}.fastq -o clean/${c}.cleaned.fastq.gz --nosingletons;
