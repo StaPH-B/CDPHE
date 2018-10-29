@@ -152,7 +152,7 @@ kraken -h
 #### DL'ing miniKraken database
 ```
 mkdir ~/databases/kraken/minikraken_CURRENT
-cd ~/databases/kraken/minikraken_CURRENT
+cd ~/databases/kraken/
 wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
 tar -xzf minikraken_20171019_4GB.tgz
 # re-name directory to /minikraken_CURRENT so that the type_pipe script can locate the database
