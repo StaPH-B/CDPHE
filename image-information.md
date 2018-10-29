@@ -298,7 +298,12 @@ Install instructions tested? YES
 
 ### SeqSero
 ```
-sudo apt-get install python-biopython
+sudo apt-get install python-biopython \
+  bwa \
+  samtools \
+  ncbi-blast+ \
+  sra-toolkit  ##ONLY INSTALL SRA-TOOLKIT VIA APT-GET IF NOT MANUALLY INSTALLED USING METHOD ABOVE
+
 cd ~/downloads
 wget https://github.com/denglab/SeqSero/archive/v1.0.1.tar.gz
 tar -xzf v1.0.1.tar.gz
