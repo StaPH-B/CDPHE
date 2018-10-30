@@ -222,7 +222,7 @@ for i in ${id[@]}; do
 done
 
 # database of H and O type genes
-database="$(find /home/$USER/ -mount -path "*/serotypefinder/database")"
+database="$(find /home/$USER/ -maxdepth 3 -mount -path "*/serotypefinder/database")"
 # serotypeFinder requires legacy blast
 blast="/opt/blast-2.2.26/"
 
