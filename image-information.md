@@ -5,30 +5,30 @@ To do:
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | Link |
 | -------- | ------- | -------- |
-| SRA-toolkit | 2.9.2 | https://github.com/ncbi/sra-tools |
-| Lyve-SET (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
-| Kraken | 1.0 | https://github.com/DerrickWood/kraken |
-| SPAdes | 3.12.0 | http://cab.spbu.ru/software/spades/ |
-| QUAST | 5.0.0 | https://github.com/ablab/quast |
-| Mash | 2.1 | https://github.com/marbl/Mash |
-| SerotypeFinder | unknown (not listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
-| SeqSero | 1.0.1 | https://github.com/denglab/SeqSero |
-| SISTR | 1.0.2 | https://github.com/peterk87/sistr_cmd |
-| ABRicate | 0.8.7 | https://github.com/tseemann/abricate |
+| [SRA-toolkit](#sra-toolkit) | 2.9.2 | https://github.com/ncbi/sra-tools |
+| [Lyve-SET](#lyve-setcg-pipelineraxml) (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
+| [Kraken](#kraken) | 1.0 | https://github.com/DerrickWood/kraken |
+| [SPAdes](#spades) | 3.12.0 | http://cab.spbu.ru/software/spades/ |
+| [QUAST](#quast) | 5.0.0 | https://github.com/ablab/quast |
+| [Mash](#mash) | 2.1 | https://github.com/marbl/Mash |
+| [SerotypeFinder](#serotypefinder) | unknown (not listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
+| [SeqSero](#seqsero) | 1.0.1 | https://github.com/denglab/SeqSero |
+| [SISTR](#sistr) | 1.0.2 | https://github.com/peterk87/sistr_cmd |
+| [ABRicate](#abricate) | 0.8.7 | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
 | Software | Version | Link |
 | -------- | ------- | ---- |
-| Prokka | 1.13.3 | https://github.com/tseemann/prokka |
-| Roary | 3.12.0 | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
+| [Prokka](#prokka) | 1.13.3 | https://github.com/tseemann/prokka |
+| [Roary](#roary) | 3.12.0 | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
 | raxml | x.x.x | We use the raxml that comes with Lyve-SET, but original repo is here: https://github.com/stamatak/standard-RAxML |
 
 ### Other Software/Tools needed (not part of either script listed above)
 | Software | Version | Link |
 | -------- | ------- | ---- |
-| Docker CE | 18.06.1-ce | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| Blast+ (legacy version) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
-| Basemount | 0.14 | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
+| [Docker CE](#docker-ce) | 18.06.1-ce | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
+| [Blast+ (legacy version)](#serotypefinder) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
+| [Basemount](#basemount) | 0.14 | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
@@ -152,7 +152,7 @@ kraken -h
 #### DL'ing miniKraken database
 ```
 mkdir ~/databases/kraken/minikraken_CURRENT
-cd ~/databases/kraken/minikraken_CURRENT
+cd ~/databases/kraken/
 wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
 tar -xzf minikraken_20171019_4GB.tgz
 # re-name directory to /minikraken_CURRENT so that the type_pipe script can locate the database
@@ -298,7 +298,12 @@ Install instructions tested? YES
 
 ### SeqSero
 ```
-sudo apt-get install python-biopython
+sudo apt-get install python-biopython \
+  bwa \
+  samtools \
+  ncbi-blast+ \
+  sra-toolkit  ##ONLY INSTALL SRA-TOOLKIT VIA APT-GET IF NOT MANUALLY INSTALLED USING METHOD ABOVE
+
 cd ~/downloads
 wget https://github.com/denglab/SeqSero/archive/v1.0.1.tar.gz
 tar -xzf v1.0.1.tar.gz
@@ -317,9 +322,12 @@ SeqSero.py --help
 Install instructions tested? YES
 
 ### SISTR
-I *think* these commands will work, but as I mentioned below, I need to test on a clean Ubuntu VM to make sure it works.
 ```
-sudo apt-get install python-pip python-dev build-essential
+sudo apt-get install python-pip \
+  python-dev \
+  build-essential \
+  ncbi-blast+ \
+  mafft
 python -m pip install --upgrade pip
 python -m pip install wheel numpy pandas
 python -m pip install sistr_cmd
@@ -330,21 +338,6 @@ sistr -h
 ```
 Install instructions tested? YES
 
-The commands for installing SISTR below did NOT work. I've read that using `sudo` with pip is a BAD idea, and the second line below also upgrades the system `pip` which causes all sorts of errors. Above are commands that I *think* will work, but I need another clean install of Ubuntu to test against.
-
-General advice for solving pip issues and links to solutions: https://github.com/pypa/pip/issues/5599
-  * do NOT use `sudo` when using pip
-  * it is a good idea to follow `pip` commands with `--user`
-  * avoid upgrading system `pip`, if so, use the system package manager to do so (i.e. `apt or apt-get`)
-```
-sudo apt-get install python-pip python-dev build-essential 
-# The below line is a BAD way to upgrade system pip
-sudo pip install --upgrade pip
-pip install wheel
-sudo pip install numpy pandas
-pip install sistr_cmd
-```
-Install instructions tested? NO
 
 ### ABRicate
 ```
