@@ -84,10 +84,14 @@ for i in ${id[@]}; do
         if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
             echo "Files are here."
         else
-            echo 'prefetching '$i'...'
-            prefetch $i
+            #echo 'prefetching '$i'...'  # commenting these lines out to test sratools docker w fasterq-dump
+            #prefetch $i
             echo 'Creating read files for '$i'...'
-            fastq-dump --gzip --skip-technical --dumpbase --split-files --clip $i
+            docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit-v2.9.2:latest \
+            #prefetch -O /data ${i};
+            fasterq-dump --skip-technical --split-files -t ~/tmp-dir -e 8 -p ${i} 
+            gzip ${i}_1.fastq
+            gzip ${i}_2.fastq
         fi
     fi
 done
