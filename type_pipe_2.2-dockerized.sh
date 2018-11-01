@@ -230,7 +230,7 @@ for i in ${id[@]}; do
         'mash sketch /data/clean/*${i}*.cleaned.fastq.gz'
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
         docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:latest /bin/bash -c \
-        'mash dist RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
+        'mash dist /RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
         echo $i >> ./mash/top_mash_results;
         head -10 mash/${i}_distance.tab >> ./mash/top_mash_results;
@@ -333,7 +333,7 @@ make_directory abricate/summary
 for y in ${databases[@]}; do
     for i in ${id[@]}; do
         docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate-v0.8.7:latest \
-        abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab
+        abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > ./abricate/${i}_${y}.tab
     done
     export y
     echo "variable y is set to:"${y}
