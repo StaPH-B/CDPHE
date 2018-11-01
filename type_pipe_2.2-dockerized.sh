@@ -185,7 +185,7 @@ for i in ${id[@]}; do
         # exporting `i` variable to make it available to the docker container
         export i
         echo "i is set to:"$i
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) kapsakcj/spades-data-workdir:latest /bin/bash -c \
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades-v3.12:latest /bin/bash -c \
         'spades.py --pe1-12 /data/clean/*$i*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
         rm -rf ./spades_assembly_trim/$i/corrected \
 		./spades_assembly_trim/$i/K21 \
@@ -204,7 +204,7 @@ done
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) kapsakcj/quast-matplotlib-fix:latest \
+    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast-v5.0.0:latest \
     quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
 done
 
