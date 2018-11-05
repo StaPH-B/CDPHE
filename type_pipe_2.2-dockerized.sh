@@ -87,7 +87,7 @@ for i in ${id[@]}; do
             #echo 'prefetching '$i'...'  # commenting these lines out to test sratools docker w fasterq-dump
             #prefetch $i
             echo 'Creating read files for '$i'...'
-            docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit-v2.9.2:latest \
+            docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 \
             #prefetch -O /data ${i};
             fasterq-dump --skip-technical --split-files -t ~/tmp-dir -e 8 -p ${i} 
             gzip ${i}_1.fastq
@@ -105,11 +105,11 @@ for i in *R1_001.fastq.gz; do
         continue
     else
         echo "LYVESET CONTAINER RUNNING SHUFFLEREADS.PL"
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset-v2.0:latest \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_shuffleReads.pl /data/${b}"_R1_001.fastq.gz" /data/${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset-v2.0:latest \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_trimClean.pl -o /data/clean/${b}.cleaned.fastq.gz -i /data/clean/${b}.fastq --nosingletons;
         remove_file clean/${b}.fastq;
     fi
@@ -121,10 +121,10 @@ if [ -s "SRR" ]; then
             continue
         else
             echo "WHAT DO YOU EVEN THINK C IS? "${c}
-            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset-v2.0:latest \
+            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_shuffleReads.pl /data/${c}"_1.fastq.gz" /data/${c}"_2.fastq.gz" > clean/${c}.fastq;
             echo ${c};
-            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset-v2.0:latest \
+            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_trimClean.pl -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
             remove_file clean/${c}.fastq;
         fi
@@ -155,10 +155,10 @@ for i in ${id[@]}; do
         # export variable i to make it available to container
         export i
         echo "variable i is set to:"${i}
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken-v1.0:latest /bin/bash -c \
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken --preload --db /kraken-database/minikraken_20171013_4GB --gzip-compressed --fastq-input /data/clean/*${i}*.cleaned.fastq.gz > /data/kraken_output/${i}/kraken.output';
         echo "Running second Kraken command: kraken-report"
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken-v1.0:latest /bin/bash -c \
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken-report --db /kraken-database/minikraken_20171013_4GB --show-zeros /data/kraken_output/${i}/kraken.output > /data/kraken_output/${i}/kraken.results';
         awk '$4 == "S" {print $0}' ./kraken_output/${i}/kraken.results | sort -s -r -n -k 1,1 > ./kraken_output/${i}/kraken_species.results;
         echo ${i} >> ./kraken_output/top_kraken_species_results;
@@ -173,7 +173,7 @@ for i in ${id[@]}; do
 		echo 'Run quality and coverage metrics have been generated'
 	else
 		echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-                docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset-v2.0:latest /bin/bash -c \
+                docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
 		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus 4 -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
 	fi
 done
@@ -189,7 +189,7 @@ for i in ${id[@]}; do
         # exporting `i` variable to make it available to the docker container
         export i
         echo "i is set to:"$i
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades-v3.12:latest /bin/bash -c \
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
         'spades.py --pe1-12 /data/clean/*$i*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
         rm -rf ./spades_assembly_trim/$i/corrected \
 		./spades_assembly_trim/$i/K21 \
@@ -208,7 +208,7 @@ done
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast-v5.0.0:latest \
+    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
     quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
 done
 
@@ -230,10 +230,10 @@ for i in ${id[@]}; do
     else
         export i
         echo "variable i is set to:"${i}
-        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:latest /bin/bash -c \
+        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash sketch /data/clean/*${i}*.cleaned.fastq.gz'
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
-        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:latest /bin/bash -c \
+        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash dist /db/RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
         echo $i >> ./mash/top_mash_results;
@@ -268,7 +268,7 @@ for i in $ecoli_isolates; do
         export i
         echo "variable i is set to:"${i}
         # Run serotypeFinder for all Ecoli isolates and output to serotypeFinder_output/<sample_name>
-        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/serotypefinder-v1.1:latest /bin/bash -c \
+        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/serotypefinder:1.1 /bin/bash -c \
         'serotypefinder.pl -d /serotypefinder/database -i /data/spades_assembly_trim/${i}/contigs.fasta -b /opt/blast-2.2.26  -o /data/serotypeFinder_output/${i} -s ecoli -k 95.00 -l 0.60'
     fi
     # Copy serotypeFinder's predicted serotype
@@ -296,7 +296,7 @@ for i in $sal_isolates; do
         if (find ./*$i*_[1,2]*fastq.gz); then
             export i
             echo "variable i is set to:"${i}
-            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero-v1.0.1:latest /bin/bash -c \
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero:1.0.1 /bin/bash -c \
             'SeqSero.py -m2 -i /data/*${i}*_[1,2]*fastq.gz'
             make_directory ./SeqSero_output/$i
             mv ./SeqSero_result*/*.txt ./SeqSero_output/$i
@@ -304,7 +304,7 @@ for i in $sal_isolates; do
         elif (find ./*$i*R[1,2]*fastq.gz); then
             export i
             echo "variable i is set to:"${i}
-            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero-v1.0.1:latest /bin/bash -c \
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero:1.0.1 /bin/bash -c \
             'SeqSero.py -m2 -i /data/*${i}*R[1,2]*fastq.gz'
             make_directory ./SeqSero_output/$i
             mv ./SeqSero_result*/*.txt ./SeqSero_output/$i
@@ -317,7 +317,7 @@ for i in $sal_isolates; do
     if [[ -n "$(find -path ./sister/${i}_sistr-results)" ]]; then
         continue
     else
-        docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sistr-v1.0.2:latest \
+        docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sistr:1.0.2 \
         sistr -i /data/spades_assembly_trim/$i/contigs.fasta ${i} -f tab -o /data/sistr/${i}_sistr-results
     fi
 done
@@ -336,12 +336,12 @@ make_directory abricate
 make_directory abricate/summary
 for y in ${databases[@]}; do
     for i in ${id[@]}; do
-        docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate-v0.8.7:latest \
+        docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 \
         abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > ./abricate/${i}_${y}.tab
     done
     export y
     echo "variable y is set to:"${y}
-    docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate-v0.8.7:latest /bin/bash -c \
+    docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
     'abricate --summary /data/abricate/*_${y}.tab > /data/abricate/summary/${y}_summary'
 done
 echo 'FINISHED RUNNING ABRICATE'
