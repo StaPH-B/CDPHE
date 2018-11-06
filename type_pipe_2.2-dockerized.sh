@@ -233,6 +233,7 @@ for i in ${id[@]}; do
         docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash sketch /data/clean/*${i}*.cleaned.fastq.gz'
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
+        echo "running mash dist in container, variable i set to:"${i}
         docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash dist /db/RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
