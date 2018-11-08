@@ -1,7 +1,3 @@
-To do:
-  * asdf
-
-
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
 | Software | Version | Link |
 | -------- | ------- | -------- |
@@ -11,7 +7,7 @@ To do:
 | [SPAdes](#spades) | 3.12.0 | http://cab.spbu.ru/software/spades/ |
 | [QUAST](#quast) | 5.0.0 | https://github.com/ablab/quast |
 | [Mash](#mash) | 2.1 | https://github.com/marbl/Mash |
-| [SerotypeFinder](#serotypefinder) | unknown (not listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
+| [SerotypeFinder](#serotypefinder) | 1.1? (older versions no longer listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
 | [SeqSero](#seqsero) | 1.0.1 | https://github.com/denglab/SeqSero |
 | [SISTR](#sistr) | 1.0.2 | https://github.com/peterk87/sistr_cmd |
 | [ABRicate](#abricate) | 0.8.7 | https://github.com/tseemann/abricate |
@@ -27,7 +23,7 @@ To do:
 | Software | Version | Link |
 | -------- | ------- | ---- |
 | [Docker CE](#docker-ce) | 18.06.1-ce | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| [Blast+ (legacy version)](#serotypefinder) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/blast-2.2.26 |
+| [Blast+ (legacy version)](#serotypefinder) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/1.1/blast-2.2.26 |
 | [Basemount](#basemount) | 0.14 | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
@@ -202,7 +198,17 @@ Install instructions tested? YES
 
 ### QUAST
 ```
-sudo apt-get install zlib1g-dev pkg-config libfreetype6-dev libpng-dev wget g++ make perl python python-setuptools python-matplotlib
+sudo apt-get install zlib1g-dev \
+                     pkg-config \
+                     libfreetype6-dev \
+                     libpng-dev \
+                     wget \
+                     g++ \
+                     make \
+                     perl \
+                     python \
+                     python-setuptools \
+                     python-matplotlib
 cd ~/downloads
 wget https://downloads.sourceforge.net/project/quast/quast-5.0.0.tar.gz
 tar -xzf quast-5.0.0.tar.gz
@@ -249,35 +255,30 @@ Install instructions tested? YES
 ### SerotypeFinder
 ```
 sudo apt-get update
-sudo apt-get install expat apache2 make wget curl git python bzip2 gcc libextutils-pkgconfig-perl libgd-perl 
-
-#UPDATE - perlbrew not needed for serotypefinder to work. Ubuntu system perl is v5.22.1 and that works great!
-#DO NOT RUN LINES BELOW WITH 3 #'S
-### install perlbrew
-###curl -L http://install.perlbrew.pl | bash
-###source ~/perl5/perlbrew/etc/bashrc
-###perlbrew init
-###nano ~/.bashrc
-# add the following line to the end of your .bashrc
-###source ~/perl5/perlbrew/etc/bashrc
-# save, exit, refresh your shell by logging out and in or run:
-###source ~/.bashrc
-###perlbrew install perl-5.23.0
-###perlbrew switch perl-5.23.0
-###perlbrew install-cpanm
+sudo apt-get install expat \
+                     apache2 \
+                     make \
+                     wget \
+                     curl \
+                     git \
+                     python \
+                     bzip2 \
+                     gcc \
+                     libextutils-pkgconfig-perl \
+                     libgd-perl 
 
 # download serotypefinder.pl from my github repo (CGE removed this older version of SerotypeFinder from their Bitbucket repo)
 mkdir ~/downloads/serotypefinder
 cd ~/downloads/serotypefinder
-wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/serotypefinder.pl
-wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/README.md
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/1.1/serotypefinder/serotypefinder.pl
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/1.1/serotypefinder/README.md
 chmod +x serotypefinder.pl
 
 # download legacy blast from my docker-auto-builds repo and move it to /opt
 mkdir ~/github
 cd ~/github
 git clone https://github.com/StaPH-B/docker-auto-builds.git
-cd docker-auto-builds/serotypefinder
+cd docker-auto-builds/serotypefinder/1.1
 sudo cp -r blast-2.2.26/ /opt/
 
 # install perl modules (perl dependencies)
@@ -342,8 +343,16 @@ Install instructions tested? YES
 ### ABRicate
 ```
 # install dependencies
-sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip \
-  libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
+sudo apt-get install emboss \
+                     bioperl \
+                     ncbi-blast+ \
+                     gzip \
+                     unzip \
+                     libjson-perl \
+                     libtext-csv-perl \
+                     libfile-slurp-perl \
+                     liblwp-protocol-https-perl \
+                     libwww-perl
 
 cd ~/downloads
 wget https://github.com/tseemann/abricate/archive/v0.8.7.tar.gz
@@ -375,7 +384,12 @@ Install instructions tested? YES
 
 ### prokka
 ```
-sudo apt-get install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
+sudo apt-get install libdatetime-perl \
+                     libxml-simple-perl \
+                     libdigest-md5-perl \
+                     git \
+                     default-jre \
+                     bioperl
 
 cd ~/downloads
 wget https://github.com/tseemann/prokka/archive/v1.13.3.tar.gz
@@ -419,8 +433,7 @@ cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
 # OR install latest Roary version available through CPAN using:
 cpanm -f Bio::Roary
 ```
-You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.`
-It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
+You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.` It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
 
 Install instructions tested? YES
 
@@ -433,7 +446,7 @@ sudo apt-get install \
     curl \
     software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-(#Verify key: 
+#Verify key by running: 
 sudo apt-key fingerprint 0EBFCD88 
 #should return: 
 pub   4096R/0EBFCD88 2017-02-22
@@ -485,3 +498,7 @@ basemount Basespace/
 # copy the given link into browser, log in to Basespace with credentials for basespace account
 # now have access to basespace files, reads, etc.
 ```
+
+To-do:
+  * asdf
+  
