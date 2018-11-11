@@ -63,10 +63,18 @@ for i in ${id[@]}; do
         if (find ./*$i*); then
             echo "Files are here."
         else
-            echo 'prefetching '$i'...'
-            prefetch $i
-            echo 'dumping reads '$i'...'
-            fastq-dump --gzip --skip-technical --readids --dumpbase --split-files --clip $i
+            echo 'prefetching reads '$i' using sratoolkit docker container...'
+            export i
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+            'prefetch -O /data ${i}'
+            echo 'now running fasterq-dump in container'
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e 8 -O /data -p ${i}.sra'
+            mv ${i}.sra_1.fastq ${i}_1.fastq
+            mv ${i}.sra_2.fastq ${i}_2.fastq
+            gzip ${i}_1.fastq
+            gzip ${i}_2.fastq
+            rm ${i}.sra
         fi
     fi
 done
@@ -79,9 +87,13 @@ for i in *R1_001.fastq.gz; do
     if [[ -n "$(find . -maxdepth 2 -name ${b}.cleaned.fastq.gz)" ]]; then
         continue
     else
-        run_assembly_shuffleReads.pl ${b}"_R1_001.fastq.gz" ${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
+        echo "LYVESET CONTAINER RUNNING SHUFFLEREADS.PL"
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        run_assembly_shuffleReads.pl /data/${b}"_R1_001.fastq.gz" /data/${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
-        run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
+        echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons;
         remove_file clean/${b}.fastq;
     fi
 done
@@ -90,9 +102,11 @@ for i in *_1.fastq.gz; do
     if find ./clean/${b}.cleaned.fastq.gz; then
         continue
     else
-        run_assembly_shuffleReads.pl ${b}"_1.fastq.gz" ${b}"_2.fastq.gz" > clean/${b}.fastq;
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        run_assembly_shuffleReads.pl /data/${b}"_1.fastq.gz" /data/${b}"_2.fastq.gz" > clean/${b}.fastq;
         echo ${b};
-        run_assembly_trimClean.pl -i clean/${b}.fastq -o clean/${b}.cleaned.fastq.gz --nosingletons;
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons;
         remove_file clean/${b}.fastq;
     fi
 done
@@ -105,9 +119,22 @@ for i in ${id[@]}; do
         size=$(du -hs ./spades_assembly_trim/$i/contigs.fasta | awk '{print $1}');
         echo 'File exists and is '$size' big.'
     else
+        # make sure variable i is available to global env, to pass into container
+        export i
         echo 'constructing assemblies for '$i', could take some time...'
-        echo "spades.py --pe1-12 ./clean/*"${i}"*.cleaned.fastq.gz -o spades_assembly_trim/"${i}"/"
-        spades.py --pe1-12 ./clean/*${i}*.cleaned.fastq.gz -o spades_assembly_trim/${i}/
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
+        'echo $i; spades.py --pe1-12 /data/clean/${i}*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
+        rm -rf ./spades_assembly_trim/$i/corrected \
+		./spades_assembly_trim/$i/K21 \
+                ./spades_assembly_trim/$i/K33 \
+                ./spades_assembly_trim/$i/K55 \
+                ./spades_assembly_trim/$i/K77 \
+                ./spades_assembly_trim/$i/K99 \
+                ./spades_assembly_trim/$i/K127 \
+                ./spades_assembly_trim/$i/misc \
+                ./spades_assembly_trim/$i/mismatch_corrector \
+                ./spades_assembly_trim/$i/split_input \
+                ./spades_assembly_trim/$i/tmp
     fi
 done
 
@@ -120,8 +147,10 @@ for i in ${id[@]}; do
         cp ./clean/${i}*.cleaned.fastq.gz new_temp/
         spades_file=./clean/${i}*.cleaned.fastq.gz
         echo $spades_file
+        export i
         echo 'constructing assemblies for '$i', second try...'
-        spades.py -o new_temp/spades_assemblies/${i}/ --pe1-12 ./new_temp/${i}_*.cleaned.fastq.gz
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
+        'spades.py -o /data/new_temp/spades_assemblies/${i}/ --pe1-12 /data/new_temp/${i}_*.cleaned.fastq.gz --careful'
     fi
 done
 mv new_temp/spades_assemblies/* spades_assembly_trim/
@@ -130,7 +159,8 @@ remove_file new_temp
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    quast.py spades_assembly_trim/$i/contigs.fasta -o quast/$i
+    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+    quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
 done
 
 ##### Run prokka on all the isolates to get the core genomes and generate .gff files #####
@@ -139,8 +169,10 @@ for i in ${id[@]}; do
     if [[ -n "$(find -path ./prokka/$i)" ]]; then
         echo "Prokka has been run on this isolate."
     else
+        export i
         echo "Prokka will now be run on "$i
-        prokka spades_assembly_trim/$i/contigs.fasta --outdir prokka/$i --prefix $i
+        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/prokka:1.13.3 /bin/bash -c \
+        'prokka /data/spades_assembly_trim/$i/contigs.fasta --outdir /data/prokka/$i --prefix $i'
     fi
 done
 
@@ -150,10 +182,12 @@ cp prokka/*/*.gff gff_files/ #copy over the .gff files from prokka
 
 ##### Run roary using the .gff file folder #####
 rm -rf roary
-roary -p 8 -e -n -v -f ./roary ./gff_files/*.gff
+docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/roary:3.12.0 /bin/bash -c \
+'roary -p 8 -e -n -v -f /data/roary /data/gff_files/*.gff'
 
 ##### Run raxml on the roary alignment to generate a tree #####
-raxmlHPC -m GTRGAMMA -p 12345 -s roary/core_gene_alignment.aln -#20 -n phylo_output
+docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:2.0.1-test /bin/bash -c \
+'raxmlHPC -m GTRGAMMA -p 12345 -s /data/roary/core_gene_alignment.aln -#20 -n phylo_output'
 rm -rf raxml/
 make_directory raxml
 mv RAxML* raxml/
