@@ -102,9 +102,10 @@ for i in *_1.fastq.gz; do
     if find ./clean/${b}.cleaned.fastq.gz; then
         continue
     else
+        echo "(run_assembly_shuffleReads.pl)Interleaving reads for:"${c}" using lyveset docker container"
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_shuffleReads.pl /data/${b}"_1.fastq.gz" /data/${b}"_2.fastq.gz" > clean/${b}.fastq;
-        echo ${b};
+        echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container"
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons;
         remove_file clean/${b}.fastq;
@@ -123,7 +124,7 @@ for i in ${id[@]}; do
         export i
         echo 'constructing assemblies for '$i', could take some time...'
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
-        'echo $i; spades.py --pe1-12 /data/clean/${i}*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
+        'spades.py --pe1-12 /data/clean/${i}*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
         rm -rf ./spades_assembly_trim/$i/corrected \
 		./spades_assembly_trim/$i/K21 \
                 ./spades_assembly_trim/$i/K33 \
@@ -151,6 +152,17 @@ for i in ${id[@]}; do
         echo 'constructing assemblies for '$i', second try...'
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
         'spades.py -o /data/new_temp/spades_assemblies/${i}/ --pe1-12 /data/new_temp/${i}_*.cleaned.fastq.gz --careful'
+        rm -rf ./new_tmp/spades_assemblies/$i/corrected \
+		./new_tmp/spades_assemblies/$i/K21 \
+                ./new_tmp/spades_assemblies/$i/K33 \
+                ./new_tmp/spades_assemblies/$i/K55 \
+                ./new_tmp/spades_assemblies/$i/K77 \
+                ./new_tmp/spades_assemblies/$i/K99 \
+                ./new_tmp/spades_assemblies/$i/K127 \
+                ./new_tmp/spades_assemblies/$i/misc \
+                ./new_tmp/spades_assemblies/$i/mismatch_corrector \
+                ./new_tmp/spades_assemblies/$i/split_input \
+                ./new_tmp/spades_assemblies/$i/tmp
     fi
 done
 mv new_temp/spades_assemblies/* spades_assembly_trim/

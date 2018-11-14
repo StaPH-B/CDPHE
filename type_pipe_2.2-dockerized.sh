@@ -84,14 +84,18 @@ for i in ${id[@]}; do
         if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
             echo "Files are here."
         else
-            #echo 'prefetching '$i'...'  # commenting these lines out to test sratools docker w fasterq-dump
-            #prefetch $i
-            echo 'Creating read files for '$i'...'
-            docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 \
-            #prefetch -O /data ${i};
-            fasterq-dump --skip-technical --split-files -t ~/tmp-dir -e 8 -p ${i} 
+            export i
+            echo 'prefetching '$i'...'
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+            'prefetch -O /data ${i}'
+            echo 'now running fasterq-dump in container'
+            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e 8 -p ${i}.sra'
+            mv ${i}.sra_1.fastq ${i}_1.fastq
+            mv ${i}.sra_2.fastq ${i}_2.fastq
             gzip ${i}_1.fastq
             gzip ${i}_2.fastq
+            rm ${i}.sra
         fi
     fi
 done
@@ -120,10 +124,10 @@ if [ -s "SRR" ]; then
         if [[ -n "$(find -path ./clean/${c}.cleaned.fastq.gz)" ]]; then
             continue
         else
-            echo "WHAT DO YOU EVEN THINK C IS? "${c}
+            echo "(run_assembly_shuffleReads.pl)Interleaving reads for:"${c}" using lyveset docker container"
             docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_shuffleReads.pl /data/${c}"_1.fastq.gz" /data/${c}"_2.fastq.gz" > clean/${c}.fastq;
-            echo ${c};
+            echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container";
             docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_trimClean.pl -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
             remove_file clean/${c}.fastq;
