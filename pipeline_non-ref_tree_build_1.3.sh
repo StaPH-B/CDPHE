@@ -153,7 +153,7 @@ rm -rf roary
 roary -p 8 -e -n -v -f ./roary ./gff_files/*.gff
 
 ##### Run raxml on the roary alignment to generate a tree #####
-raxmlHPC -m GTRGAMMA -p 12345 -s roary/core_gene_alignment.aln -#20 -n phylo_output
+raxmlHPC -m GTRGAMMA -p 12345 -x 12345 -s roary/core_gene_alignment.aln -# 100 -n phylo_output -f a
 rm -rf raxml/
 make_directory raxml
 mv RAxML* raxml/
