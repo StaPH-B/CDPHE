@@ -1,37 +1,30 @@
-To do:
-  * change serotypefinder install instructions to the ones I used for installing it into Docker
-  * delete redundant sections
-  * show location of various databases (Kraken, Mash, serotypefinder, etc.)
-  * add install instructions for Basemount
-
 ### Software/Tools used (in order they appear in type_pipe_X.X.sh)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | -------- |
-| SRA-toolkit | 2.9.2 | `fastq-dump` | https://github.com/ncbi/sra-tools |
-| CG-pipeline/Lyve-SET | x.x.x | `run_assembly_shuffleReads.pl`, `run_assembly_trimClean.pl`, `run_assembly_readMetrics.pl` | |
-| Kraken | x.x.x | | https://github.com/DerrickWood/kraken |
-| SPAdes | 3.12.0 | | http://cab.spbu.ru/software/spades/ |
-| QUAST | 5.0.0 | | https://github.com/ablab/quast |
-| Mash | x.x.x | | |
-| SerotypeFinder | x.x.x | | |
-| SeqSero | 1.0.1 | | https://github.com/denglab/SeqSero |
-| SISTR | x.x.x | | |
-| ABRicate | 0.8.7 | | https://github.com/tseemann/abricate |
+| Software | Version | Link |
+| -------- | ------- | -------- |
+| [SRA-toolkit](#sra-toolkit) | 2.9.2 | https://github.com/ncbi/sra-tools |
+| [Lyve-SET](#lyve-setcg-pipelineraxml) (includes CG-Pipeline scripts and raxml) | 2.0.1 (lyve-SET) | https://github.com/lskatz/lyve-SET https://github.com/lskatz/CG-Pipeline |
+| [Kraken](#kraken) | 1.0 | https://github.com/DerrickWood/kraken |
+| [SPAdes](#spades) | 3.12.0 | http://cab.spbu.ru/software/spades/ |
+| [QUAST](#quast) | 5.0.0 | https://github.com/ablab/quast |
+| [Mash](#mash) | 2.1 | https://github.com/marbl/Mash |
+| [SerotypeFinder](#serotypefinder) | 1.1? (older versions no longer listed on their bitbucket) | https://bitbucket.org/genomicepidemiology/serotypefinder/ |
+| [SeqSero](#seqsero) | 1.0.1 | https://github.com/denglab/SeqSero |
+| [SISTR](#sistr) | 1.0.2 | https://github.com/peterk87/sistr_cmd |
+| [ABRicate](#abricate) | 0.8.7 | https://github.com/tseemann/abricate |
 
 ### Software/Tools used (in order they appear in pipeline_non-ref_tree_build_X.X.sh)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | ---- |
-| Prokka | 1.13.3 | | https://github.com/tseemann/prokka |
-| Roary | 3.12.0 | | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
-| raxml | x.x.x | | |
+| Software | Version | Link |
+| -------- | ------- | ---- |
+| [Prokka](#prokka) | 1.13.3 | https://github.com/tseemann/prokka |
+| [Roary](#roary) | 3.12.0 | https://github.com/sanger-pathogens/Roary https://metacpan.org/pod/roary |
+| raxml | x.x.x | We use the raxml that comes with Lyve-SET, but original repo is here: https://github.com/stamatak/standard-RAxML |
 
 ### Other Software/Tools needed (not part of either script listed above)
-| Software | Version | commands used (if not the name of the tool) | Link |
-| -------- | ------- | ------------------------------------------- | ---- |
-| Docker CE | x.x.x | | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
-| Perlbrew | x.x.x | | |
-| Blast+ (legacy version) | 2.2.26 | | No longer available through NCBI's FTP site, available here: INSERT LINK HERE |
-| Basemount | | | |
+| Software | Version | Link |
+| -------- | ------- | ---- |
+| [Docker CE](#docker-ce) | 18.06.1-ce | https://docs.docker.com/install/linux/docker-ce/ubuntu/ |
+| [Blast+ (legacy version)](#serotypefinder) | 2.2.26 | No longer available through NCBI's FTP site, available here: https://github.com/StaPH-B/docker-auto-builds/tree/master/serotypefinder/1.1/blast-2.2.26 |
+| [Basemount](#basemount) | 0.14 | https://help.basespace.illumina.com/articles/descriptive/introduction-to-basemount/ |
 
 #### Notes:
   * All software will be stored into the `$HOME/downloads` directory
@@ -41,10 +34,11 @@ To do:
 ### SRA-toolkit
 Instructions were followed for Binary installation on Ubuntu: https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
 ```
+cd ~/downloads
 wget http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.9.2/sratoolkit.2.9.2-ubuntu64.tar.gz
 tar -xzf sratoolkit.2.9.2-ubuntu64.tar.gz
 rm -rf sratoolkit.2.9.2-ubuntu64.tar.gz
-mv sratoolkit.2.9.2-ubuntu64/ ~/downloads
+
 nano ~/.bashrc
 # add this line to the end of your ~/.bashrc
 export PATH=$PATH:~/downloads/sratoolkit.2.9.2-ubuntu64/bin
@@ -70,44 +64,101 @@ AAGTAGGTCTCGTCTGTGTTTTCTACGAGCTTGTGTTCCAGCTGACCCACTCCCTGGGTGGGGGGACTGGGT
 ```
 Install instructions tested? YES 
 
-### CG-pipeline/Lyve-SET
+### Lyve-SET/CG-pipeline/raxml
+Installing Lyve-SET will also install the scripts from CG-pipeline that we use for cleaning the reads, and will also install raxml. So here's how to install Lyve-SET:
+#### Lyve-SET
+```
+sudo apt-get update
+sudo apt-get install perl\
+                     libfile-slurp-perl\
+                     openjdk-9-jre\
+                     bioperl\
+                     wget\
+                     libz-dev\
+                     git\
+                     libncurses5-dev\
+                     libncursesw5-dev\
+                     build-essential\
+                     ncbi-blast+\
+                     libsvn-perl\
+                     subversion\
+                     libsvn1\
+                     automake1.11\
+                     libpthread-stubs0-dev
+cd ~/downloads
+wget https://github.com/lskatz/lyve-SET/archive/v2.0.1.tar.gz
+tar -zxf v2.0.1.tar.gz
+rm -rf v2.0.1.tar.gz
 
-Install instructions tested? NO
+# try installing perl modules without sudo first, then if it fails try with sudo
+(sudo) cpanm URI::Escape \
+           File::Slurp \
+           String::Escape \
+           Test::Most \
+           Bio::FeatureIO
+cd ~/downloads/lyve-SET-
+make install
+# If 'make install' fails, I find it best to delete the entire lyve-set directory, re-extract
+# from the tarball and to re-run 'make install' from the lyve-set directory again. 'make install'
+# does not like to be run more than once because it tries to create files that it already created
+# and then fails because those files are there.
+nano ~/.bashrc
+# add both of the following lines to the bottom of ~/.bashrc
+export PATH=$PATH:~/downloads/lyve-SET-2.0.1/scripts
+export PATH=$PATH:~/downloads/lyve-SET-2.0.1/lib/edirect
+# save and close file
+# refresh .bashrc with:
+source ~/.bashrc
+```
+Install instructions tested? YES
 
 ### Kraken
-jellyfish
-
-download 1.1.11 into downloads folder
-
-installed into `/opt/jellyfish`
-
-kraken
-
-cloned github into downloads
-
-installed into `/opt/kraken`
+#### Jellyfish install
+Jellyfish must be installed prior to installing Kraken.
+```
+cd ~/downloads
+wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
+tar -zxf jellyfish-1.1.12.tar.gz
+rm -rf jellyfish-1.1.12.tar.gz
+cd jellyfish-1.1.12
+./configure --prefix=/opt/
+make -j 4
+sudo make install
+```
+#### Kraken install
 ```
 sudo apt-get install zlib1g-dev
-./configure --prefix=/opt/mash
-
-git clone https://github.com/DerrickWood/kraken.git
-sudo ./install_kraken.sh /opt/kraken/
-```
-OR
-```
-cd downloads
-sudo git clone https://github.com/DerrickWood/kraken.git
-cd kraken
+cd ~/downloads
+wget https://github.com/DerrickWood/kraken/archive/v1.0.tar.gz
+tar -xzf v1.0.tar.gz
+cd kraken-1.0
 sudo mkdir /opt/kraken
 sudo ./install_kraken.sh /opt/kraken/
-nano $HOME/.bash_vars
-# add the following: export PATH=$PATH:/opt/jellyfish/bin
+
+nano ~/.bashrc
+# add the following lines to .bashrc, save, refresh shell by logging in/out
 export PATH=$PATH:/opt/kraken
+export PATH=$PATH:/opt/jellyfish/bin
+
+# test with:
+which kraken
+# or:
+kraken -h
 ```
-Install instructions tested? NO
+#### DL'ing miniKraken database
+```
+mkdir ~/databases/kraken/minikraken_CURRENT
+cd ~/databases/kraken/
+wget https://ccb.jhu.edu/software/kraken/dl/minikraken_20171019_4GB.tgz
+tar -xzf minikraken_20171019_4GB.tgz
+# re-name directory to /minikraken_CURRENT so that the type_pipe script can locate the database
+mv minikraken_20171013_4GB/ minikraken_CURRENT/
+```
+Install instructions tested? YES
 
 ### SPAdes
 ```
+cd ~/downloads
 wget http://cab.spbu.ru/files/release3.12.0/SPAdes-3.12.0-Linux.tar.gz 
 tar -xzf SPAdes-3.12.0-Linux.tar.gz
 rm -rf SPAdes-3.12.0-Linux.tar.gz
@@ -147,7 +198,17 @@ Install instructions tested? YES
 
 ### QUAST
 ```
-sudo apt-get install zlib1g-dev pkg-config libfreetype6-dev libpng-dev wget g++ make perl python python-setuptools python-matplotlib
+sudo apt-get install zlib1g-dev \
+                     pkg-config \
+                     libfreetype6-dev \
+                     libpng-dev \
+                     wget \
+                     g++ \
+                     make \
+                     perl \
+                     python \
+                     python-setuptools \
+                     python-matplotlib
 cd ~/downloads
 wget https://downloads.sourceforge.net/project/quast/quast-5.0.0.tar.gz
 tar -xzf quast-5.0.0.tar.gz
@@ -162,69 +223,67 @@ which quast.py
 
 # test the install with
 sudo ./setup.py test
-
 ```
 Install instructions tested? YES
 
 ### Mash
 ```
-git clone https://github.com/marbl/Mash.git
+# These directions are for installing the dependency-free binary version of Mash
+cd ~/downloads
+wget https://github.com/marbl/Mash/releases/download/v2.1/mash-Linux64-v2.1.tar
+tar -xvf mash-Linux64-v2.1.tar
+rm -rf mash-Linux64-v2.1
+nano ~/.bashrc
+# add the following line to your .bashrc
+export PATH=$PATH:~/downloads/mash-Linux64-v2.1
+# save and close, refresh your shell:
+source ~/.bashrc
+# test install with:
+mash
 ```
-You may download and install the release version of Cap’n Proto like so:
+#### DL'ing Mash database
 ```
-curl -O https://capnproto.org/capnproto-c++-0.6.1.tar.gz
-tar zxf capnproto-c++-0.6.1.tar.gz
-cd capnproto-c++-0.6.1
-./configure
-make -j6 check
-sudo make install
+mkdir ~/databases/mash
+cd ~/databases/mash
+wget https://gembox.cbcb.umd.edu/mash/RefSeqSketchesDefaults.msh.gz
+gunzip RefSeqSketchesDefaults.msh.gz
+mkdir refseq_CURRENT
+mv RefSeqSketchesDefaults.msh.gz refseq_CURRENT/
 ```
-This will install `capnp`, the Cap’n Proto command-line tool. It will also install `libcapnp`,`libcapnpc`, and `libkj` in `/usr/local/lib` and headers in `/usr/local/include/capnp` and `/usr/local/include/kj`
-```
-sudo apt-get install libgsl-dev
-sudo apt-get install libgsl2
-sudo apt-get install autoconf
-Sudo ./configure --prefix=/opt/mash
-```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SerotypeFinder
-TO-DO: FIX AND FINISH THIS SECTION. MIGHT NOT NEED PERLBREW OR PERLv5.23.0 TO RUN PROPERLY
 ```
 sudo apt-get update
-sudo apt-get install expat apache2 make wget curl git python bzip2 gcc libextutils-pkgconfig-perl libgd-perl 
-
-# install perlbrew
-curl -L http://install.perlbrew.pl | bash
-source ~/perl5/perlbrew/etc/bashrc
-perlbrew init
-
-nano ~/.bashrc
-# add the following line to the end of your .bashrc
-source ~/perl5/perlbrew/etc/bashrc
-# save, exit, refresh your shell by logging out and in or run:
-source ~/.bashrc
-
-perlbrew install perl-5.23.0
-perlbrew switch perl-5.23.0
-perlbrew install-cpanm
+sudo apt-get install expat \
+                     apache2 \
+                     make \
+                     wget \
+                     curl \
+                     git \
+                     python \
+                     bzip2 \
+                     gcc \
+                     libextutils-pkgconfig-perl \
+                     libgd-perl 
 
 # download serotypefinder.pl from my github repo (CGE removed this older version of SerotypeFinder from their Bitbucket repo)
 mkdir ~/downloads/serotypefinder
 cd ~/downloads/serotypefinder
-wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/serotypefinder.pl
-wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/serotypefinder/README.md
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/1.1/serotypefinder/serotypefinder.pl
+wget https://raw.githubusercontent.com/StaPH-B/docker-auto-builds/master/serotypefinder/1.1/serotypefinder/README.md
 chmod +x serotypefinder.pl
 
 # download legacy blast from my docker-auto-builds repo and move it to /opt
 mkdir ~/github
 cd ~/github
 git clone https://github.com/StaPH-B/docker-auto-builds.git
-cd docker-auto-builds/serotypefinder
+cd docker-auto-builds/serotypefinder/1.1
 sudo cp -r blast-2.2.26/ /opt/
 
 # install perl modules (perl dependencies)
-sudo cpanm inc::latest Module::Build \
+# Try installing without sudo first, then if it fails then try sudo.
+(sudo) cpanm inc::latest Module::Build \
  Data::Dumper \
  Getopt::Long \
  Try::Tiny::Retry \
@@ -235,13 +294,18 @@ sudo cpanm inc::latest Module::Build \
  Data::Stag \
  Test::Most \
  CJFIELDS/BioPerl-1.6.924.tar.gz --force
-
 ```
-Install instructions tested? NO
+Install instructions tested? YES
 
 ### SeqSero
 ```
-sudo apt-get install python-biopython
+sudo apt-get install python-biopython \
+  bwa \
+  samtools \
+  ncbi-blast+ \
+  sra-toolkit  ##ONLY INSTALL SRA-TOOLKIT VIA APT-GET IF NOT MANUALLY INSTALLED USING METHOD ABOVE
+
+cd ~/downloads
 wget https://github.com/denglab/SeqSero/archive/v1.0.1.tar.gz
 tar -xzf v1.0.1.tar.gz
 rm -rf v1.0.1.tar.gz
@@ -260,19 +324,35 @@ Install instructions tested? YES
 
 ### SISTR
 ```
-sudo apt-get install python-pip python-dev build-essential 
-sudo pip install --upgrade pip
-pip install wheel
-sudo pip install numpy pandas
-pip install sistr_cmd
+sudo apt-get install python-pip \
+  python-dev \
+  build-essential \
+  ncbi-blast+ \
+  mafft
+python -m pip install --upgrade pip
+python -m pip install wheel numpy pandas
+python -m pip install sistr_cmd
+# test install and get version with:
+sistr -V
+# get help options with:
+sistr -h
 ```
-Install instructions tested? NO
+Install instructions tested? YES
+
 
 ### ABRicate
 ```
 # install dependencies
-sudo apt-get install emboss bioperl ncbi-blast+ gzip unzip \
-  libjson-perl libtext-csv-perl libfile-slurp-perl liblwp-protocol-https-perl libwww-perl
+sudo apt-get install emboss \
+                     bioperl \
+                     ncbi-blast+ \
+                     gzip \
+                     unzip \
+                     libjson-perl \
+                     libtext-csv-perl \
+                     libfile-slurp-perl \
+                     liblwp-protocol-https-perl \
+                     libwww-perl
 
 cd ~/downloads
 wget https://github.com/tseemann/abricate/archive/v0.8.7.tar.gz
@@ -304,7 +384,12 @@ Install instructions tested? YES
 
 ### prokka
 ```
-sudo apt-get install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl
+sudo apt-get install libdatetime-perl \
+                     libxml-simple-perl \
+                     libdigest-md5-perl \
+                     git \
+                     default-jre \
+                     bioperl
 
 cd ~/downloads
 wget https://github.com/tseemann/prokka/archive/v1.13.3.tar.gz
@@ -328,23 +413,29 @@ Install instructions tested? YES
 
 ### Roary
 ```
-sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank mafft fasttree
-# install Roary version 3.12.0 specifically
-sudo cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
-# OR install latest Roary version available through CPAN using:
-# sudo cpanm -f Bio::Roary
-
+sudo apt-get install bedtools \
+                     cd-hit \
+                     ncbi-blast+ \
+                     mcl \
+                     parallel \
+                     prank \
+                     mafft \
+                     fasttree
 # The following perl module dependencies might be required, so go ahead and install with:
-sudo cpanm LWP::Simple Text::CSV JSON File::Slurp
+cpanm LWP::Simple \
+      Text::CSV \
+      JSON \
+      File::Slurp
+      
+# install Roary version 3.12.0 specifically
+cpanm -f AJPAGE/Bio-Roary-3.12.0.tar.gz
+
+# OR install latest Roary version available through CPAN using:
+cpanm -f Bio::Roary
 ```
-You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.`
-It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
+You can ignore the warning that says something like: `Use of uninitialized value in require at /usr/local/lib/x86_64-linux-gnu/perl/5.22.1/Encode.pm line 69.` It is a benign warning according to the developer of Roary: https://github.com/sanger-pathogens/Roary/issues/323#issuecomment-294887715
 
 Install instructions tested? YES
-
-### raxml
-
-Install instructions tested? NO
 
 ### Docker CE
 ```
@@ -355,7 +446,7 @@ sudo apt-get install \
     curl \
     software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-(#Verify key: 
+#Verify key by running: 
 sudo apt-key fingerprint 0EBFCD88 
 #should return: 
 pub   4096R/0EBFCD88 2017-02-22
@@ -396,124 +487,18 @@ sudo chmod g+rwx "/home/$USER/.docker" -R
 ```
 Install instructions tested? YES
 
-### Perlbrew (required for serotypefinder)
-TO-DO: THESE COMMANDS NEED TO BE ADJUSTED - PROBABLY BETTER TO SOURCE .BASHRC 
+### Basemount
 ```
-curl -L https://install.perlbrew.pl | bash
-nano ~/.profile
-paste: source ~/perl5/perlbrew/etc/bashrc
-. .profile
-perlbrew --sudo install-cpanm
-nano $HOME/.bash_vars
-# add the following: export PERL5LIB=$PERL5LIB:/lib
-```
-Install instructions tested? NO
-
-### BLAST+ Legacy (v2.2.26) for SerotypeFinder
-```
-# git clone files for blast-legacy from git repo containing dockerfile for serotypefinder
-# move to /opt
-# make sure that the blast executables are in the $PATH
-which formatblastdb
-# should result in:
-/opt/blast-2.2.26/bin
-```
-Install instructions tested? NO
-
------------ END ------------------
-
---Everything below is from the image info google-doc, it may or may not work when installing using these directions---
-
-##### BLAST+
-```
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install build-essential
-sudo apt-get install liblmdb-dev
-mkdir ncbi-blast+
-cd ncbi-blast+/
-wget -N ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-1.x86_64.rpm
-sudo apt-get install alien
-sudo alien -i ncbi-blast-2.6.0+-1.x86_64.rpm
+# ensure fusermount is available with:
+fusermount --version
+# if so then:
+sudo bash -c "$(curl -L https://basemount.basespace.illumina.com/install)"
+mkdir ~/Basespace
+basemount Basespace/
+# copy the given link into browser, log in to Basespace with credentials for basespace account
+# now have access to basespace files, reads, etc.
 ```
 
-
-### Lyve-set
-```
-cpanm File::Slurp
-cpanm URI::Escape
-sudo cpanm Bio::FeatureIO
-sudo apt-get install libz-dev
-sudo apt-get install unzip
-sudo apt-get install libncurses5-dev
-wget https://github.com/lskatz/lyve-SET/archive/v2.0.1.tar.gz
-cd /opt/
-mkdir Lyve-SET/
-sudo tar -xvzf ~/v2.0.1.tar.gz
-cd lyve-SET-2.0.1
-sudo make install
-cd /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1 
-sudo make
-```
-Had to update the sym links manually:
-```
-cd /opt/Lyve-SET/lyve-SET-2.0.1/scripts
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/bcftools-1.3.1/bcftools bcftools
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1/bgzip bgzip
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_isFastqPE.pl run_assembly_isFastqPE.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_metrics.pl run_assembly_metrics.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_readMetrics.pl run_assembly_readMetrics.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_removeDuplicateReads.pl run_assembly_removeDuplicateReads.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_shuffleReads.pl run_assembly_shuffleReads.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/cg-pipeline/scripts/run_assembly_trimClean.pl run_assembly_trimClean.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/samtools samtools
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/htslib-1.3.1/tabix tabix
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/vcftools_0.1.12b/perl/vcf-sort vcf-sort
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/bcftools-1.3.1/vcfutils.pl vcfutils.pl
-sudo ln -sfn /opt/Lyve-SET/lyve-SET-2.0.1/lib/samtools-1.3.1/misc/wgsim wgsim
-nano $HOME/.bash_vars
-# add the following to .bash_vars: 
-export PATH=/opt/Lyve-SET/lyve-SET-2.0.1/scripts:$PATH
-```
-
-### Jellyfish
-```
-cd downloads
-wget https://github.com/gmarcais/Jellyfish/releases/download/v1.1.12/jellyfish-1.1.12.tar.gz
-tar -xvzf jellyfish-1.1.12.tar.gz
-cd jellyfish-1.1.12
-./configure --prefix=/opt/
-make -j 4
-sudo make install
-```
-
-### Install mash/capnproto
-```
-cd downloads
-git clone https://github.com/marbl/Mash.git
-curl -O https://capnproto.org/capnproto-c++-0.6.1.tar.gz
-tar -zxf capnproto-c++-0.6.1.tar.gz
-cd capnproto-c++-0.6.1
-./configure
-make -j 6 check
-sudo make install
-sudo apt-get install libgsl-dev
-sudo apt-get install libgsl2
-sudo apt-get install autoconf
-cd Mash
-./bootstrap.sh
-sudo ./configure --prefix=/opt/mash/
-Sudo make
-sudo make install
-```
-
-### Roary
-```
-git clone https://github.com/sanger-pathogens/Roary.git
-sudo apt-get install bedtools cd-hit ncbi-blast+ mcl parallel cpanminus prank mafft fasttree
-sudo cpanm -f Bio::Roary
-cpanm LWP::Simple
-cpanm Text::CSV
-cpanm JSON
-cpanm File::Slurp
-```
+To-do:
+  * asdf
+  
