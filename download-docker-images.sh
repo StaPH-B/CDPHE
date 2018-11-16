@@ -15,3 +15,4 @@ docker pull staphb/roary:3.12.0
 docker pull staphb/kraken:1.0
 docker pull staphb/sistr:1.0.2
 docker pull staphb/seqsero:1.0.1
+docker pull staphb/shovill:1.0.4

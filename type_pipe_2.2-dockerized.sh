@@ -18,34 +18,17 @@ done
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            rm -rf $1
-        else
-            echo "Continuing on"
-        fi;
-    else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            rm -rf $1;
-        else
-            echo "Continuing on"
-        fi;
+    if [ -e $1 ];then
+        rm -rf $1
     fi
 }
 #This function will check to make sure the directory doesn't already exist before trying to create it
 make_directory () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+    if [ -e $1 ]; then
+        echo "Directory "$1" already exists"
     else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+        mkdir $1
+        echo "Directory "$1" has been created"
     fi
 }
 
@@ -93,12 +76,13 @@ for i in ${id[@]}; do
             'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e 8 -p ${i}.sra'
             mv ${i}.sra_1.fastq ${i}_1.fastq
             mv ${i}.sra_2.fastq ${i}_2.fastq
-            gzip ${i}_1.fastq
-            gzip ${i}_2.fastq
+            pigz ${i}_1.fastq
+            pigz ${i}_2.fastq
             rm ${i}.sra
         fi
     fi
 done
+remove_file tmp-dir
 
 ##### These are the QC trimming scripts as input to trimClean #####
 make_directory clean
@@ -209,11 +193,60 @@ for i in ${id[@]}; do
     fi
 done
 
+##### Run Shovill to assemble (using SPAdes) #####
+#
+## NOTE: This is currently set up to accept SRA reads with this file name suffixs: _1.fastq.gz
+#                                                                                  _2.fastq.gz
+#
+## NOTE: this is set up to use the raw R1/R2 illuina reads as input, not cleaned reads
+## May need to alter CG-pipeline scripts to produce cleaned, trimmed reads
+## as non-interleaved fastqs. May not be necessary since Shovil does have options
+## for trimming adapters w/ trimmomatic and does it's own read correction using Lighter
+make_directory ./shovill
+for i in ${id[@]}; do
+    if [[ -n "$(find -path ./shovill/$i/contigs.fa 2>/dev/null)" ]]; then #This will print out the size of the spades $
+        size=$(du -hs ./shovill/$i/contigs.fa | awk '{print $1}');
+        echo 'File exists and is '$size' big.'
+    else
+        echo 'constructing assemblies for '$i', could take some time...'
+        # exporting `i` variable to make it available to the docker container
+        export i
+        echo "i is set to:"$i" , running shovill (spades) now...."
+        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/shovill:1.0.4 /bin/bash -c \
+        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_1.fastq.gz --R2 /data/*${i}*_2.fastq.gz --ram 29 --cpus 0'
+    fi
+done
+
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
+     if [[ -n "$(find -path ./quast/${i}_output_file 2>/dev/null)" ]]; then
+        echo "Skipping "$i". It's spades assembly has already been QUASTed."
+    else
+    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+    	quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
+    fi
+done
+
+##### Run quast on shovill assemblies and generate summary output files #####
+make_directory quast-shovill
+for i in ${id[@]}; do
+    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
+        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
+    else
+    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+    	quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+    fi
+done
+
+##### QUAST output file generation for shovill assemblies #####
+for i in ${id[@]}; do
+    remove_file quast-shovill/${i}_output_file
+    tail -n +3 ./quast-shovill/$i/report.txt | grep "contigs (>= 0 bp)" >> quast-shovill/${i}_output_file
+    tail -n +3 ./quast-shovill/$i/report.txt | grep "Total length (>= 0 bp)" >> quast-shovill/${i}_output_file
+    tail -n +10 ./quast-shovill/$i/report.txt | grep "contigs" >> quast-shovill/${i}_output_file
+    tail -n +10 ./quast-shovill/$i/report.txt | grep "N50" >> quast-shovill/${i}_output_file
+    #May need to add in some files which explain the limits for different organisms, eg acceptable lengths of genome for e coli, accep$
 done
 
 ##### QUAST quality check ######
@@ -340,10 +373,15 @@ echo ${databases[@]}
 make_directory abricate
 make_directory abricate/summary
 for y in ${databases[@]}; do
-    for i in ${id[@]}; do
-        docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 \
-        abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > ./abricate/${i}_${y}.tab
-    done
+    if [[ -n "$(find -path ./abricate/summary/${y}_summary)" ]]; then
+        echo "Abricate kadabricate! ${y} has been run"
+        continue
+    else
+        for i in ${id[@]}; do
+            docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+            'abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
+        done
+    fi
     export y
     echo "variable y is set to:"${y}
     docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
@@ -354,14 +392,19 @@ echo 'FINISHED RUNNING ABRICATE'
 #####Create a file with all the relevant run info
 remove_file isolate_info_file.tsv
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
-echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file.tsv
+echo -e "$qc_metric_head\tcontigs\tshovill_contigs\tlargest_contig\tshovill_largest_contig\ttotal_length\tshovill_total_length\tN50\tshovill_N50\tL50\tshovill_L50" >> isolate_info_file.tsv
 for i in ${id[@]}; do
     qc_metric=$(grep "${i}" ./clean/readMetrics.tsv)
     contigs=$(tail -9 ./quast/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
+    shovill_contigs=$(tail -9 ./quast-shovill/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
     largest_contig=$(tail -9 ./quast/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
+    shovill_largest_contig=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
     total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
+    shovill_total_length=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
     N50=$(tail -9 ./quast/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
+    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
     L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
     if [ -z "$contigs" ]; then
          contigs="N/A"
     fi
@@ -377,8 +420,8 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+    echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
+    echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50"
 done
 
 #### Remove the tmp1 file that lingers #####
