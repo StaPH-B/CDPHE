@@ -185,7 +185,7 @@ docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/roary:3.12.0
 
 ##### Run raxml on the roary alignment to generate a tree #####
 docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:2.0.1-test /bin/bash -c \
-'raxmlHPC -m GTRGAMMA -p 12345 -s /data/roary/core_gene_alignment.aln -#20 -n phylo_output'
+'raxmlHPC -m GTRGAMMA -p 12345 -x 12345 -s /data/roary/core_gene_alignment.aln -# 100 -n phylo_output -f a'
 rm -rf raxml/
 make_directory raxml
 mv RAxML* raxml/
