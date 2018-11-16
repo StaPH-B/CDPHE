@@ -1,40 +1,25 @@
 #!/bin/bash
-#Author: Logan Fink
+#Authors: Logan Fink, Curtis Kapsak
 #Usage: script to create a reference free phylogenetic tree from a set of fastq files
 #Permission to copy and modify is granted without warranty of any kind
-#Last revised 06/29/18
+
 #This function will check if the file exists before trying to remove it
 remove_file () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            rm -rf $1
-        else
-            echo "Continuing on"
-        fi;
-    else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            rm -rf $1;
-        else
-            echo "Continuing on"
-        fi;
+    if [ -e $1 ];then
+        rm -rf $1
     fi
 }
-#This function wid check to make sure the directory doesn't already exist before trying to create it
+
+#This function will check to make sure the directory doesn't already exist before trying to create it
 make_directory () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+    if [ -e $1 ]; then
+        echo "Directory "$1" already exists"
     else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+        mkdir $1
+        echo "Directory "$1" has been created"
     fi
 }
+
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
 if [[ -n "$(find ./fastq_files)" ]]; then
     mv ./fastq_files/* .

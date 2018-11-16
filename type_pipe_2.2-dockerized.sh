@@ -18,34 +18,17 @@ done
 
 #This function will check if the file exists before trying to remove it
 remove_file () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            rm -rf $1
-        else
-            echo "Continuing on"
-        fi;
-    else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            rm -rf $1;
-        else
-            echo "Continuing on"
-        fi;
+    if [ -e $1 ];then
+        rm -rf $1
     fi
 }
 #This function will check to make sure the directory doesn't already exist before trying to create it
 make_directory () {
-    if [[ $1=~"/" ]]; then
-        if [[ -n "$(find -path $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+    if [ -e $1 ]; then
+        echo "Directory "$1" already exists"
     else
-        if [[ -n "$(find $1 2>/dev/null)" ]]; then
-            echo "Directory "$1" already exists"
-        else
-            mkdir $1
-        fi;
+        mkdir $1
+        echo "Directory "$1" has been created"
     fi
 }
 
@@ -99,6 +82,7 @@ for i in ${id[@]}; do
         fi
     fi
 done
+remove_file tmp-dir
 
 ##### These are the QC trimming scripts as input to trimClean #####
 make_directory clean
@@ -210,8 +194,12 @@ for i in ${id[@]}; do
 done
 
 ##### Run Shovill to assemble (using SPAdes) #####
+#
+## NOTE: This is currently set up to accept SRA reads with this file name suffixs: _1.fastq.gz
+#                                                                                  _2.fastq.gz
+#
 ## NOTE: this is set up to use the raw R1/R2 illuina reads as input, not cleaned reads
-## May need to alter CG-pipeline scripts to produce cleaned, trimmed reads 
+## May need to alter CG-pipeline scripts to produce cleaned, trimmed reads
 ## as non-interleaved fastqs. May not be necessary since Shovil does have options
 ## for trimming adapters w/ trimmomatic and does it's own read correction using Lighter
 make_directory ./shovill
@@ -225,23 +213,33 @@ for i in ${id[@]}; do
         export i
         echo "i is set to:"$i" , running shovill (spades) now...."
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/shovill:1.0.4 /bin/bash -c \
-        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_R1_001.fastq.gz --R2 /data/*${i}*_R2_001.fastq.gz --ram 29 --cpus 0'
+        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_1.fastq.gz --R2 /data/*${i}*_2.fastq.gz --ram 29 --cpus 0'
     fi
 done
 
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
+     if [[ -n "$(find -path ./quast/${i}_output_file 2>/dev/null)" ]]; then
+        echo "Skipping "$i". It's spades assembly has already been QUASTed."
+    else
+    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+    	quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
+    fi
 done
 
 ##### Run quast on shovill assemblies and generate summary output files #####
 make_directory quast-shovill
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
+        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
+    else
+    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+    	quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+    fi
 done
+
+##### QUAST output file generation for shovill assemblies #####
 for i in ${id[@]}; do
     remove_file quast-shovill/${i}_output_file
     tail -n +3 ./quast-shovill/$i/report.txt | grep "contigs (>= 0 bp)" >> quast-shovill/${i}_output_file
