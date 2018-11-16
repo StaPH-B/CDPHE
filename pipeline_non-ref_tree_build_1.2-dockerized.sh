@@ -72,8 +72,8 @@ for i in ${id[@]}; do
             'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e 8 -O /data -p ${i}.sra'
             mv ${i}.sra_1.fastq ${i}_1.fastq
             mv ${i}.sra_2.fastq ${i}_2.fastq
-            gzip ${i}_1.fastq
-            gzip ${i}_2.fastq
+            pigz ${i}_1.fastq
+            pigz ${i}_2.fastq
             rm ${i}.sra
         fi
     fi
