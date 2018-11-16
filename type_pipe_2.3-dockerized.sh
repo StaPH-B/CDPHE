@@ -324,6 +324,9 @@ make_directory sistr
 echo "Salmonella "$sal_isolates
 oddity="See comments below*"
 remove_file ./SeqSero_output/all_serotype_results
+sistr_header="header"
+remove_file ./sistr/sistr_summary_temp
+remove_file ./sistr/sistr_summary
 for i in $sal_isolates; do
 #for i in ${id[@]}; do #In case of emergency (classification acting up), uncomment this line to serotype every isolate using SeqSero, comment out line above
     # Check if SeqSero output exists for each Salmonenlla spp. isolate; skip if so
@@ -352,13 +355,19 @@ for i in $sal_isolates; do
     echo ${i} >> ./SeqSero_output/all_serotype_results
     head -10 ./SeqSero_output/${i}/Seqsero_result.txt >> ./SeqSero_output/all_serotype_results
     echo >> ./SeqSero_output/all_serotype_results
-    if [[ -n "$(find -path ./sister/${i}_sistr-results)" ]]; then
+    if [[ -n "$(find -path ./sistr/${i}_sistr-results.tab)" ]]; then
         continue
     else
         docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sistr:1.0.2 \
         sistr -i /data/spades_assembly_trim/$i/contigs.fasta ${i} -f tab -o /data/sistr/${i}_sistr-results
     fi
+    sistr_header="$(head -1 ./sistr/${i}_sistr-results.tab)"
+    tail -n +2 ./sistr/${i}_sistr-results.tab >> ./sistr/sistr_summary_temp
 done
+echo $sistr_header
+echo $sistr_header >> ./sistr/sistr_summary
+grep -v "fasta_filepath" ./sistr/sistr_summary_temp >> ./sistr/sistr_summary
+rm ./sistr/sistr_summary_temp
 
 #####This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
 echo 'Setting abricate db PATH'
