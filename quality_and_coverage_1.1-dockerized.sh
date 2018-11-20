@@ -70,7 +70,7 @@ for line in ${spp_variables[@]}; do
     fi
 
     cd SEQ${SEQ_NUM}/${species}
-    /home/staphb/scripts/run_type_pipe_2.2-dockerized.sh -l "$genome_length"
+    /home/staphb/scripts/run_type_pipe_2.3-dockerized.sh -l "$genome_length"
     cd
 done
 
