@@ -38,7 +38,9 @@ fi
 echo "Sequence Length: $SEQUENCE_LEN"
 
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
-if [[ -n "$(find ./fastq_files)" ]]; then
+#if [[ -n "$(find ./fastq_files)" ]]; then
+if [[ -e ./fastq_files ]]; then
+    echo "Moving fastq files from ./fastq_files to ./ (top-level DIR)"
     mv ./fastq_files/* .
     rm -rf ./fastq_files
 fi
