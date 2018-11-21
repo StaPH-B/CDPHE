@@ -48,7 +48,7 @@ fi
 declare -a srr=() #PASTE IN ANY SRR NUMBERS INTO FILE named: SRR
 while IFS= read -r line; do
     srr+=("$line")
-done < ./SRR
+done < ./SRR 2>/dev/null
 #find . -maxdepth 1 -name '*fastq*' |cut -d '-' -f 1|cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '-' and '_')
 find . -maxdepth 1 -name '*fastq*' |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '_')
 declare -a tmp=()
@@ -106,7 +106,7 @@ if [ -s "SRR" ]; then
 else
     echo "There are no SRR numbers in this run"
 fi
-remove_file ./clean/\**
+rm ./clean/\** 2>/dev/null
 
 ##### Kraken is called here as a contamination check #####
 #Mini kraken is used here, since it takes up less space.  If results are inconclusive, can run kraken with the larger database
