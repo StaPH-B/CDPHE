@@ -58,7 +58,12 @@ for line in ${spp_variables[@]}; do
 
     #Copy all the files from basespace into the newly created folder.
     yes n | basemount Basespace/
-    cp ./Basespace/Projects/SEQ${SEQ_NUM}_QC_${extension}/Samples/*/Files/* SEQ${SEQ_NUM}/${species}
+    if [ -e ./SEQ${SEQ_NUM}/${species}/fastq_files ]; then
+        echo "Directory SEQ${SEQ_NUM}/${species}/fastq_files already exists, skipping transfer of reads from Basespace to local DIR"
+    else
+        echo "Copying reads from Basespace now..."
+        cp ./Basespace/Projects/SEQ${SEQ_NUM}_QC_${extension}/Samples/*/Files/* SEQ${SEQ_NUM}/${species}
+    fi
 
     #Check that there are actually fastq files, and if there aren't, end script and remove empty folders
     if [[ ! -z `find SEQ${SEQ_NUM}/${species} -maxdepth 1 -name "*fastq*"` ]]; then

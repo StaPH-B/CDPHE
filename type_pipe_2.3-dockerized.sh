@@ -38,7 +38,8 @@ fi
 echo "Sequence Length: $SEQUENCE_LEN"
 
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
-if [[ -n "$(find ./fastq_files)" ]]; then
+if [[ -e ./fastq_files ]]; then
+    echo "Moving fastq files from ./fastq_files to ./ (top-level DIR)"
     mv ./fastq_files/* .
     rm -rf ./fastq_files
 fi
@@ -46,7 +47,7 @@ fi
 declare -a srr=() #PASTE IN ANY SRR NUMBERS INTO FILE named: SRR
 while IFS= read -r line; do
     srr+=("$line")
-done < ./SRR
+done < ./SRR 2>/dev/null
 #find . -maxdepth 1 -name '*fastq*' |cut -d '-' -f 1|cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '-' and '_')
 find . -maxdepth 1 -name '*fastq*' |cut -d '_' -f 1 |cut -d '/' -f 2 >tmp1 #output all fastq file identifiers in cwd to file tmp1 (the delimiters here are '_')
 declare -a tmp=()
@@ -120,7 +121,7 @@ if [ -s "SRR" ]; then
 else
     echo "There are no SRR numbers in this run"
 fi
-remove_file ./clean/\**
+rm ./clean/\** 2>/dev/null
 
 ##### Kraken is called here as a contamination check #####
 #Mini kraken is used here, since it takes up less space.  If results are inconclusive, can run kraken with the larger database
@@ -132,8 +133,6 @@ make_directory kraken_output
 #KRAKEN_DB=$(find /home/$USER/ -mount -path "*/kraken/minikraken_CURRENT")
 #echo 'KRAKEN DATABASE PATH SET TO:' $KRAKEN_DB
 #echo $KRAKEN_DB
-
-remove_file kraken_output/top_kraken_species_results
 for i in ${id[@]}; do
     if [[ -n "$(find . -path ./kraken_output/${i}/kraken_species.results 2>/dev/null)" ]]; then
         echo "Isolate "${i}" has been krakked."
@@ -148,10 +147,14 @@ for i in ${id[@]}; do
         echo "Running second Kraken command: kraken-report"
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken-report --db /kraken-database/minikraken_20171013_4GB --show-zeros /data/kraken_output/${i}/kraken.output > /data/kraken_output/${i}/kraken.results';
-        awk '$4 == "S" {print $0}' ./kraken_output/${i}/kraken.results | sort -s -r -n -k 1,1 > ./kraken_output/${i}/kraken_species.results;
-        echo ${i} >> ./kraken_output/top_kraken_species_results;
-        head -10 ./kraken_output/$i/kraken_species.results >> ./kraken_output/top_kraken_species_results;
     fi
+done
+# make the top_kraken_species_results file without having to re-run kraken itself
+remove_file kraken_output/top_kraken_species_results
+for i in ${id[@]}; do
+    awk '$4 == "S" {print $0}' ./kraken_output/${i}/kraken.results | sort -s -r -n -k 1,1 > ./kraken_output/${i}/kraken_species.results;
+    echo ${i} >> ./kraken_output/top_kraken_species_results;
+    head -10 ./kraken_output/$i/kraken_species.results >> ./kraken_output/top_kraken_species_results;
 done
 
 ##### Run Quality and Coverage Metrics #####
@@ -387,7 +390,8 @@ for y in ${databases[@]}; do
         continue
     else
         for i in ${id[@]}; do
-            docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+	    export i
+            docker run -e y -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
             'abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
         done
     fi
