@@ -19,6 +19,7 @@ done
 #This function will check if the file exists before trying to remove it
 remove_file () {
     if [ -e $1 ];then
+        echo "File $1 has been removed"
         rm -rf $1
     fi
 }
