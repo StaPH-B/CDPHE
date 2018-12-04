@@ -56,6 +56,10 @@ for line in ${spp_variables[@]}; do
     #Make folder for SEQ run
     mkdir -p SEQ${SEQ_NUM}/${species}
 
+    # export variables to make them available to type_pipe script. For use in naming isolate_info_file.tsv to include that info.
+    export SEQ_NUM
+    export species
+
     #Copy all the files from basespace into the newly created folder.
     yes n | basemount Basespace/
     if [ -e ./SEQ${SEQ_NUM}/${species}/fastq_files ]; then

@@ -164,8 +164,9 @@ for i in ${id[@]}; do
     if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
 		echo 'Run quality and coverage metrics have been generated'
 	else
-		echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-                docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+		export SEQUENCE_LEN
+                echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
+                docker run --rm=True -e SEQUENCE_LEN -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
 		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus 4 -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
 	fi
 done
@@ -206,20 +207,20 @@ done
 ## May need to alter CG-pipeline scripts to produce cleaned, trimmed reads
 ## as non-interleaved fastqs. May not be necessary since Shovil does have options
 ## for trimming adapters w/ trimmomatic and does it's own read correction using Lighter
-make_directory ./shovill
-for i in ${id[@]}; do
-    if [[ -n "$(find -path ./shovill/$i/contigs.fa 2>/dev/null)" ]]; then #This will print out the size of the spades $
-        size=$(du -hs ./shovill/$i/contigs.fa | awk '{print $1}');
-        echo 'File exists and is '$size' big.'
-    else
-        echo 'constructing assemblies for '$i', could take some time...'
-        # exporting `i` variable to make it available to the docker container
-        export i
-        echo "i is set to:"$i" , running shovill (spades) now...."
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/shovill:1.0.4 /bin/bash -c \
-        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_1.fastq.gz --R2 /data/*${i}*_2.fastq.gz --ram 29 --cpus 0'
-    fi
-done
+#make_directory ./shovill
+#for i in ${id[@]}; do
+#    if [[ -n "$(find -path ./shovill/$i/contigs.fa 2>/dev/null)" ]]; then #This will print out the size of the spades $
+#        size=$(du -hs ./shovill/$i/contigs.fa | awk '{print $1}');
+#        echo 'File exists and is '$size' big.'
+#    else
+#        echo 'constructing assemblies for '$i', could take some time...'
+#        # exporting `i` variable to make it available to the docker container
+#        export i
+#        echo "i is set to:"$i" , running shovill (spades) now...."
+#        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/shovill:1.0.4 /bin/bash -c \
+#        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_1.fastq.gz --R2 /data/*${i}*_2.fastq.gz --ram 29 --cpus 0'
+#    fi
+#done
 
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
@@ -233,25 +234,25 @@ for i in ${id[@]}; do
 done
 
 ##### Run quast on shovill assemblies and generate summary output files #####
-make_directory quast-shovill
-for i in ${id[@]}; do
-    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
-        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
-    else
-    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    	quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
-    fi
-done
+#make_directory quast-shovill
+#for i in ${id[@]}; do
+#    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
+#        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
+#    else
+#    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+#    	quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+#    fi
+#done
 
 ##### QUAST output file generation for shovill assemblies #####
-for i in ${id[@]}; do
-    remove_file quast-shovill/${i}_output_file
-    tail -n +3 ./quast-shovill/$i/report.txt | grep "contigs (>= 0 bp)" >> quast-shovill/${i}_output_file
-    tail -n +3 ./quast-shovill/$i/report.txt | grep "Total length (>= 0 bp)" >> quast-shovill/${i}_output_file
-    tail -n +10 ./quast-shovill/$i/report.txt | grep "contigs" >> quast-shovill/${i}_output_file
-    tail -n +10 ./quast-shovill/$i/report.txt | grep "N50" >> quast-shovill/${i}_output_file
-    #May need to add in some files which explain the limits for different organisms, eg acceptable lengths of genome for e coli, accep$
-done
+#for i in ${id[@]}; do
+#    remove_file quast-shovill/${i}_output_file
+#    tail -n +3 ./quast-shovill/$i/report.txt | grep "contigs (>= 0 bp)" >> quast-shovill/${i}_output_file
+#    tail -n +3 ./quast-shovill/$i/report.txt | grep "Total length (>= 0 bp)" >> quast-shovill/${i}_output_file
+#    tail -n +10 ./quast-shovill/$i/report.txt | grep "contigs" >> quast-shovill/${i}_output_file
+#    tail -n +10 ./quast-shovill/$i/report.txt | grep "N50" >> quast-shovill/${i}_output_file
+#    #May need to add in some files which explain the limits for different organisms, eg acceptable lengths of genome for e coli, accep$
+#done
 
 ##### QUAST quality check ######
 for i in ${id[@]}; do
@@ -404,21 +405,25 @@ done
 echo 'FINISHED RUNNING ABRICATE'
 
 #####Create a file with all the relevant run info
+## Shovill quast metrics included, but currently commented out because shovill is turned off too.
 remove_file isolate_info_file.tsv
 qc_metric_head=$(head -1 ./clean/readMetrics.tsv)
-echo -e "$qc_metric_head\tcontigs\tshovill_contigs\tlargest_contig\tshovill_largest_contig\ttotal_length\tshovill_total_length\tN50\tshovill_N50\tL50\tshovill_L50" >> isolate_info_file.tsv
+# header line to use without shovill
+echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file.tsv
+# header line to use with shovill
+#echo -e "$qc_metric_head\tcontigs\tshovill_contigs\tlargest_contig\tshovill_largest_contig\ttotal_length\tshovill_total_length\tN50\tshovill_N50\tL50\tshovill_L50" >> isolate_info_file.tsv
 for i in ${id[@]}; do
     qc_metric=$(grep "${i}" ./clean/readMetrics.tsv)
     contigs=$(tail -9 ./quast/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
-    shovill_contigs=$(tail -9 ./quast-shovill/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
+#    shovill_contigs=$(tail -9 ./quast-shovill/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
     largest_contig=$(tail -9 ./quast/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
-    shovill_largest_contig=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
+#    shovill_largest_contig=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
     total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
-    shovill_total_length=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
+#    shovill_total_length=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
     N50=$(tail -9 ./quast/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
-    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
+#    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
     L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
-    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+#    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
     if [ -z "$contigs" ]; then
          contigs="N/A"
     fi
@@ -434,8 +439,13 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-    echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
-    echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50"
+
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+
+    # use these lines if shovill is turned on and you want to compare between SPAdes and shovill-spades outputs
+    #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
+    #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50"
 done
 
 #### Remove the tmp1 file that lingers #####
