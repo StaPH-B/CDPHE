@@ -38,6 +38,10 @@ if [ -z "$SEQUENCE_LEN" ]; then
 fi
 echo "Sequence Length: $SEQUENCE_LEN"
 
+THREADS=$(nproc --all)
+echo "Number of threads set to: $THREADS"
+export THREADS
+
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
 if [[ -e ./fastq_files ]]; then
     echo "Moving fastq files from ./fastq_files to ./ (top-level DIR)"
@@ -74,8 +78,8 @@ for i in ${id[@]}; do
             docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
             'prefetch -O /data ${i}'
             echo 'now running fasterq-dump in container'
-            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
-            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e 8 -p ${i}.sra'
+            docker run -e THREADS -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e ${THREADS} -p ${i}.sra'
             mv ${i}.sra_1.fastq ${i}_1.fastq
             mv ${i}.sra_2.fastq ${i}_2.fastq
             pigz ${i}_1.fastq
@@ -100,7 +104,7 @@ for i in *R1_001.fastq.gz; do
         echo ${b};
         echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
-        run_assembly_trimClean.pl -o /data/clean/${b}.cleaned.fastq.gz -i /data/clean/${b}.fastq --nosingletons;
+        run_assembly_trimClean.pl --numcpus ${THREADS} -o /data/clean/${b}.cleaned.fastq.gz -i /data/clean/${b}.fastq --nosingletons;
         remove_file clean/${b}.fastq;
     fi
 done
@@ -115,7 +119,7 @@ if [ -s "SRR" ]; then
             run_assembly_shuffleReads.pl /data/${c}"_1.fastq.gz" /data/${c}"_2.fastq.gz" > clean/${c}.fastq;
             echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container";
             docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
-            run_assembly_trimClean.pl -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
+            run_assembly_trimClean.pl --numcpus ${THREADS} -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
             remove_file clean/${c}.fastq;
         fi
     done
@@ -143,8 +147,8 @@ for i in ${id[@]}; do
         # export variable i to make it available to container
         export i
         echo "variable i is set to:"${i}
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
-        'kraken --preload --db /kraken-database/minikraken_20171013_4GB --gzip-compressed --fastq-input /data/clean/*${i}*.cleaned.fastq.gz > /data/kraken_output/${i}/kraken.output';
+        docker run -e i -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
+        'kraken --preload --threads ${THREADS} --db /kraken-database/minikraken_20171013_4GB --gzip-compressed --fastq-input /data/clean/*${i}*.cleaned.fastq.gz > /data/kraken_output/${i}/kraken.output';
         echo "Running second Kraken command: kraken-report"
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken-report --db /kraken-database/minikraken_20171013_4GB --show-zeros /data/kraken_output/${i}/kraken.output > /data/kraken_output/${i}/kraken.results';
@@ -166,8 +170,8 @@ for i in ${id[@]}; do
 	else
 		export SEQUENCE_LEN
                 echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-                docker run --rm=True -e SEQUENCE_LEN -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
-		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus 4 -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
+                docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
 	fi
 done
 
@@ -182,8 +186,8 @@ for i in ${id[@]}; do
         # exporting `i` variable to make it available to the docker container
         export i
         echo "i is set to:"$i
-        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
-        'spades.py --pe1-12 /data/clean/*$i*.cleaned.fastq.gz --careful -o /data/spades_assembly_trim/${i}/'
+        docker run -e i -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
+        'spades.py --pe1-12 /data/clean/*$i*.cleaned.fastq.gz -t ${THREADS} --careful -o /data/spades_assembly_trim/${i}/'
         rm -rf ./spades_assembly_trim/$i/corrected \
 		./spades_assembly_trim/$i/K21 \
                 ./spades_assembly_trim/$i/K33 \
@@ -229,7 +233,7 @@ for i in ${id[@]}; do
         echo "Skipping "$i". It's spades assembly has already been QUASTed."
     else
     	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    	quast.py /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
+    	quast.py --fast -t ${THREADS} /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
     fi
 done
 
@@ -239,8 +243,8 @@ done
 #    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
 #        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
 #    else
-#    	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-#    	quast.py /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+#    	docker run -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+#    	quast.py --fast -t ${THREADS} /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
 #    fi
 #done
 
@@ -272,12 +276,12 @@ for i in ${id[@]}; do
     else
         export i
         echo "variable i is set to:"${i}
-        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
-        'mash sketch /data/clean/*${i}*.cleaned.fastq.gz'
+        docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
+        'mash sketch -p ${THREADS} /data/clean/*${i}*.cleaned.fastq.gz'
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
         echo "running mash dist in container, variable i set to:"${i}
-        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
-        'mash dist /db/RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
+        docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
+        'mash dist -p ${THREADS} /db/RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
         echo $i >> ./mash/top_mash_results;
         head -10 mash/${i}_distance.tab >> ./mash/top_mash_results;
@@ -361,10 +365,10 @@ for i in $sal_isolates; do
     head -10 ./SeqSero_output/${i}/Seqsero_result.txt >> ./SeqSero_output/all_serotype_results
     echo >> ./SeqSero_output/all_serotype_results
     if [[ -n "$(find -path ./sistr/${i}_sistr-results.tab)" ]]; then
-        continue
+        echo "${i} has a SISTR (file)."
     else
         docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sistr:1.0.2 \
-        sistr -i /data/spades_assembly_trim/$i/contigs.fasta ${i} -f tab -o /data/sistr/${i}_sistr-results
+        sistr -i /data/spades_assembly_trim/$i/contigs.fasta ${i} -t ${THREADS} -f tab -o /data/sistr/${i}_sistr-results
     fi
     sistr_header="$(head -1 ./sistr/${i}_sistr-results.tab)"
     tail -n +2 ./sistr/${i}_sistr-results.tab >> ./sistr/sistr_summary_temp
@@ -393,8 +397,8 @@ for y in ${databases[@]}; do
     else
         for i in ${id[@]}; do
 	    export i
-            docker run -e y -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
-            'abricate -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
+            docker run -e y -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+            'abricate --threads ${THREADS} -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
         done
     fi
     export y
@@ -418,7 +422,7 @@ for i in ${id[@]}; do
 #    shovill_contigs=$(tail -9 ./quast-shovill/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
     largest_contig=$(tail -9 ./quast/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
 #    shovill_largest_contig=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
-    total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
+    total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length   " |tr -s ' '|cut -d' ' -f3)
 #    shovill_total_length=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
     N50=$(tail -9 ./quast/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
 #    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)

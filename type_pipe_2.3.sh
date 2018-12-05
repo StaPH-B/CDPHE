@@ -265,7 +265,7 @@ for i in $sal_isolates; do
     head -10 ./SeqSero_output/${i}/Seqsero_result.txt >> ./SeqSero_output/all_serotype_results
     echo >> ./SeqSero_output/all_serotype_results
     if [[ -n "$(find -path ./sistr/${i}_sistr-results.tab)" ]]; then
-        continue
+        echo "${i} has a SISTR (file)."
     else
         sistr -i ./spades_assembly_trim/$i/contigs.fasta ${i} -f tab -o sistr/${i}_sistr-results
     fi
