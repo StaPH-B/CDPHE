@@ -297,10 +297,11 @@ for i in ${id[@]}; do
      echo "${i}; $(head -1 ./mash/${i}_distance.tab | sed 's/.*-\.-//' | grep -o '^\S*' | sed -e 's/\(.fna\)*$//g'); $(head -1 ./mash/${i}_distance.tab | awk '{ print $3 }')" >> ./mash/sample_id/raw.csv
 done
 
-# database of H and O type genes
-database="$(find /home/$USER/ -mount -path "*/serotypefinder/database")"
-# serotypeFinder requires legacy blast
-blast="/opt/blast-2.2.26/"
+#### Commented out because blast and the serotypefinder database are static in the container and paths are in the docker run command
+## database of H and O type genes
+#database="$(find /home/$USER/ -mount -path "*/serotypefinder/database")"
+## serotypeFinder requires legacy blast
+#blast="/opt/blast-2.2.26/"
 
 ##### SerotypeFinder, if mash pointed to E. coli, this will tell us the serotype details #####
 ecoli_isolates="$(awk -F ';' '$2 ~ /Escherichia_coli/' ./mash/sample_id/raw.csv | awk -F ';' '{print$1}')"
