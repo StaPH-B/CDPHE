@@ -380,7 +380,7 @@ rm ./sistr/sistr_summary_temp
 
 #####This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
 echo 'Setting abricate db PATH'
-abricate_db_path=$(find /home/$USER/ -mount -path "*/abricate/db")
+abricate_db_path=$(find /home/$USER/ -mount -path "*/abricate*/db")
 echo 'ABRICATE DB PATH SET'
 declare -a databases=()
 for i in $abricate_db_path/*;
