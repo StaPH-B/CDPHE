@@ -145,16 +145,27 @@ fi
 
 # Prokka
 make_directory prokka
+# Make array called assemblylist
 # find all assembly.fasta files in /unicycler-assemblies , put into an array 'assemblylist'
-# run all assemblies through prokka
 declare -a assemblylist=()
+# for all unicycler produced assembliy.fasta files that exist, run prokka if it hasn't been run yet
+# find all assembly.fasta files in /unicycler-assemblies , put into an array 'assemblylist'
 for i in ./*/bc*/*/assembly.fasta; do
-    echo "${i}"
+    echo "i is set to ${i} , adding to assemblylist array."
     assemblylist=("${assemblylist[@]}" "${i}")
+    # create a temp_var variable and shorten the name, so that it can be used as a prefix in Prokka
+    # when creating the name for unicycler output DIR, make sure that you specify the nanopore and ILMN reads used and DO NOT use an underscore
+    ##example: unicycler -o unicycler-assemblies/bc01-SRR11111111/fourth-try-bold-mode-on
+    ##example: unicycler -o unicycler-assemblies/bc03-05-06-SRR5192920/sixth-try-normal-mode
     temp_var=$(echo ${i} | cut -d '/' -f 3,4| sed -r 's/[/]+/_/g')
-    echo ${temp_var}
-    echo "Prokka will now be run on :"${temp_var}
-    prokka $i --outdir prokka/${temp_var} --prefix ${temp_var} --cpus ${THREADS} 
+    echo "temp_var is set to:${temp_var}"
+    # check to see if prokka DIR exists, if so skip, if not, run prokka
+    if [ -e ./prokka/${temp_var} ]; then
+        echo "Prokka has been run on ${temp_var} , Skipping."
+    else
+        echo "Prokka will now be run on :"${temp_var}
+        prokka $i --outdir prokka/${temp_var} --prefix ${temp_var} --cpus ${THREADS} 
+    fi
 done
 
 #echo ${assemblylist[@]}
@@ -170,3 +181,6 @@ done
 #        prokka unicycler-assemblies/$i/contigs.fasta --outdir prokka/$i --prefix $i
 #    fi
 #done
+
+# remove lingering tmp1 file
+remove_file tmp1
