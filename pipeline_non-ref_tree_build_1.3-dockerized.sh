@@ -164,8 +164,12 @@ remove_file new_temp
 ##### Run quast assembly statistics for verification that the assemblies worked #####
 make_directory quast
 for i in ${id[@]}; do
-    docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-    quast.py /data/spades_assembly_trim/$i/contigs.fasta -t ${THREADS} -o /data/quast/$i
+    if [[ -e quast/${i}_output_file ]]; then
+        echo "Skipping ${i}. It's SPAdes assembly has already been QUASTed."
+    else
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+        quast.py /data/spades_assembly_trim/$i/contigs.fasta -t ${THREADS} -o /data/quast/$i
+    fi
 done
 
 ##### Run prokka on all the isolates to get the core genomes and generate .gff files #####
