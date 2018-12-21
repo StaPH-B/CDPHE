@@ -42,6 +42,39 @@ THREADS=$(nproc --all)
 echo "Number of threads set to: $THREADS"
 export THREADS
 
+##### Check to see if docker is installed #####
+if [ -z $(which docker) ]; then
+   echo "Docker is not installed, Please see https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce for instructions on how to install Docker. Now exiting."
+   exit
+else
+    echo "$(docker --version) is installed."
+fi
+
+##### Function and check to see if Docker images are downloaded, if not, download them with docker pull #####
+docker_image_check () {
+if [ -z $(docker images -q $1) ]; then
+    docker pull $1
+else
+    echo "Docker image $1 already exists locally."
+fi
+}
+# gotta check em all! gotta check em all! Dock-er-mon!
+echo "Now checking to see if all necessary docker images are downloaded..."
+docker_image_check staphb/sratoolkit:2.9.2
+docker_image_check staphb/lyveset:2.0.1
+docker_image_check staphb/kraken:1.0
+docker_image_check staphb/lyveset:2.0.1
+docker_image_check staphb/spades:3.12.0
+docker_image_check staphb/spades:3.12.0
+docker_image_check staphb/mash:2.1
+docker_image_check staphb/serotypefinder:1.1
+docker_image_check staphb/seqsero:1.0.1
+docker_image_check staphb/sistr:1.0.2
+docker_image_check staphb/abricate:0.8.7
+docker_image_check staphb/bwa:0.7.17
+docker_image_check staphb/samtools:1.9
+
+
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
 if [[ -e ./fastq_files ]]; then
     echo "Moving fastq files from ./fastq_files to ./ (top-level DIR)"
@@ -162,18 +195,6 @@ for i in ${id[@]}; do
     head -10 ./kraken_output/$i/kraken_species.results >> ./kraken_output/top_kraken_species_results;
 done
 
-##### Run Quality and Coverage Metrics #####
-## check to see if the run quality and coverage metrics have already been completed or not
-for i in ${id[@]}; do
-    if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
-		echo 'Run quality and coverage metrics have been generated'
-	else
-		export SEQUENCE_LEN
-                echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-                docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
-		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
-	fi
-done
 
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
 make_directory ./spades_assembly_trim
@@ -201,6 +222,68 @@ for i in ${id[@]}; do
                 ./spades_assembly_trim/$i/tmp
     fi
 done
+
+
+
+##### Split cleaned reads into separate R1 and R2 files #####
+# Use split, cleaned reads as input for a few different things - bwa mem, shovill, others?
+make_directory ./split-clean
+for i in ${id[@]}; do
+    if [[ -e ./split-clean/${i}.cleaned_R1.fastq.gz  ]]; then
+        echo "Reads for ${i}. Have already been split into two R1/2 files. Skipping."
+    else
+        export i
+        echo "SPLITTING CLEANED READS FOR ${i}"
+        docker run --rm=True -e i -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+        'run_assembly_shuffleReads.pl -d /data/clean/${i}*.cleaned.fastq.gz -gz 1> /data/split-clean/${i}.cleaned_R1.fastq.gz 2> /data/split-clean/${i}.cleaned_R2.fastq.gz'
+    fi
+done
+
+##### Align split cleaned reads to their spades assemblies using bwa mem #####
+make_directory ./bwa
+for i in ${id[@]}; do
+    if [[ -e ./bwa/${i}.alignment.sorted.bam ]]; then
+        echo "Cleaned, split reads for ${i} have already been aligned to it's assembly. Skipping."
+    else
+        # index the assembly first
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/bwa:0.7.17 \
+        bwa index /data/spades_assembly_trim/${i}/contigs.fasta
+        echo "Aligning cleaned, split reads to the assembly for ${i} with bwa mem (in Docker container)."
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/bwa:0.7.17 \
+        bwa mem -t ${THREADS} /data/spades_assembly_trim/${i}/contigs.fasta /data/split-clean/${i}.cleaned_R1.fastq.gz /data/split-clean/${i}.cleaned_R2.fastq.gz > bwa/${i}.alignment.sam
+        # change SAM to BAM
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/samtools:1.9 \
+        samtools view -buS --threads ${THREADS} /data/bwa/${i}.alignment.sam > bwa/${i}.alignment.bam
+        # sort the BAM
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/samtools:1.9 \
+        samtools sort --threads ${THREADS} /data/bwa/${i}.alignment.bam -o /data/bwa/${i}.alignment.sorted.bam
+        # remove intermediate alignment files, leaving only sorted bam for each isolate
+        remove_file bwa/${i}.alignment.sam
+        remove_file bwa/${i}.alignment.bam
+    fi
+done
+
+##### Run Quality and Coverage Metrics #####
+## check to see if the run quality and coverage metrics have already been completed or not
+if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
+    echo 'Run quality and coverage metrics have been generated'
+else
+    export SEQUENCE_LEN
+    echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
+    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+    'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
+fi
+
+##### Run Quality and Coverage Metrics using BAMs #####
+## check to see if the run quality and coverage metrics have already been completed or not
+if [[ -n "$(find -path ./split-clean/readMetrics.tsv 2>/dev/null)" ]]; then
+    echo "Run quality and coverage metrics from BAMs have been generated"
+else
+    export SEQUENCE_LEN
+    echo "Running run_assembly_readMetrics.pl on BAMs and generating split-clean/readMetrics.tsv"
+    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+    'run_assembly_readMetrics.pl --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN" /data/bwa/*.alignment.sorted.bam'| sort -k3,3n > ./split-clean/readMetrics.tsv
+fi
 
 ##### Run Shovill to assemble (using SPAdes) #####
 #
@@ -446,6 +529,50 @@ for i in ${id[@]}; do
     fi
 
     echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+
+    # use these lines if shovill is turned on and you want to compare between SPAdes and shovill-spades outputs
+    #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
+    #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50"
+done
+
+
+##### This section is for adding the assembly metrics to the readMetrics.tsv file generated on the split-clean
+##### reads (needed to see the median fragment length AKA insert size) and generating isolate_info_file_split-clean.tsv
+## NOTE: shovill lines commented out below have NOT been adjusted/tested. Just keeping lines in case we switch to Shovill full time.
+remove_file isolate_info_file_split-clean.tsv
+echo -e "$qc_metric_head\tcontigs\tlargest_contig\ttotal_length\tN50\tL50" >> isolate_info_file_split-clean.tsv
+# header line to use with shovill
+#echo -e "$qc_metric_head\tcontigs\tshovill_contigs\tlargest_contig\tshovill_largest_contig\ttotal_length\tshovill_total_length\tN50\tshovill_N50\tL50\tshovill_L50" >> isolate_info_file.tsv
+for i in ${id[@]}; do
+    qc_metric=$(grep "${i}" ./split-clean/readMetrics.tsv)
+    contigs=$(tail -9 ./quast/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
+#    shovill_contigs=$(tail -9 ./quast-shovill/${i}/report.txt |grep "contigs" |tr -s ' '|cut -d' ' -f3)
+    largest_contig=$(tail -9 ./quast/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
+#    shovill_largest_contig=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Largest contig" |tr -s ' '|cut -d' ' -f3)
+    total_length=$(tail -9 ./quast/${i}/report.txt |grep "Total length   " |tr -s ' '|cut -d' ' -f3)
+#    shovill_total_length=$(tail -9 ./quast-shovill/${i}/report.txt |grep "Total length" |tr -s ' '|cut -d' ' -f3)
+    N50=$(tail -9 ./quast/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
+#    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
+    L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+#    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+    if [ -z "$contigs" ]; then
+         contigs="N/A"
+    fi
+    if [ -z "$largest_contig" ]; then
+         largest_contig="N/A"
+    fi
+    if [ -z "$total_length" ]; then
+         total_length="N/A"
+    fi
+    if [ -z "$N50" ]; then
+         N50="N/A"
+    fi
+    if [ -z "$L50" ]; then
+         L50="N/A"
+    fi
+
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file_split-clean.tsv
     echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
 
     # use these lines if shovill is turned on and you want to compare between SPAdes and shovill-spades outputs
