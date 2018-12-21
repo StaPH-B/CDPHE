@@ -5,6 +5,73 @@
 #Last revised 09/08/18 - LDF
 
 #Set all the variables that need to be set
+
+version="2.3"
+#Print out the line after the current line in the script, and print the evaluation
+#of how it will be executed
+print_next_command() {
+    current_line=$(($1+1))
+    range=$(($1+1))
+    x=0
+    while [ $x == 0 ]; do
+        p=$(sed -n ${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        if [[ $p == *\\ ]]; then
+            range=$(($range+1))
+        else
+            x+=1
+        fi
+    done
+    if [[ $range == $current_line ]]; then
+        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        line_data=$(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        line_data=$(echo $line_data | sed "s/'//g")
+        #echo line_data
+        output_prefix=''
+        if [[ $line_data == *'>'* ]]; then
+            end=${line_data##*>}
+            output_prefix='Output file: '
+            line_data=${line_data%%>*}
+        fi
+        eval echo $line_data
+        eval echo $output_prefix$end
+    else
+        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        line_data=$(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        line_data=$(echo $line_data | sed "s/'//g")
+        #echo $line_data
+        output_prefix=''
+        if [[ $line_data == *'>'* ]]; then
+            end=${line_data##*>}
+            output_prefix='Output file: '
+            line_data=${line_data%%>*}
+        fi
+        eval echo $line_data
+        eval echo $output_prefix$end
+    fi
+}
+
+#print_next_command() {
+#    current_line=$(($1+1))
+#    range=$(($1+1))
+#    x=0
+#    while [ $x == 0 ]; do
+#        p=$(sed -n ${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        if [[ $p == *\\ ]]; then
+#            range=$(($range+1))
+#        else
+#            x+=1
+#        fi
+#    done
+#    if [[ $range == $current_line ]]; then
+#        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        eval echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#    else
+#        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        eval echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#    fi
+#}
+
+#Get the info from the sequencing length flag
 while test $# -gt 0
 do
     case $1 in
@@ -17,14 +84,14 @@ do
 done
 
 #This function will check if the file exists before trying to remove it
-remove_file () {
+remove_file() {
     if [ -e $1 ];then
         echo "File $1 has been removed"
         rm -rf $1
     fi
 }
 #This function will check to make sure the directory doesn't already exist before trying to create it
-make_directory () {
+make_directory() {
     if [ -e $1 ]; then
         echo "Directory "$1" already exists"
     else
@@ -75,11 +142,13 @@ for i in ${id[@]}; do
         else
             export i
             echo 'prefetching '$i'...'
+            print_next_command $LINENO ${i}
             docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
-            'prefetch -O /data ${i}'
+            'prefetch -O /data '${i}
             echo 'now running fasterq-dump in container'
+            print_next_command $LINENO ${i}
             docker run -e THREADS -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
-            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e ${THREADS} -p ${i}.sra'
+            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e ${THREADS} -p '${i}'.sra'
             mv ${i}.sra_1.fastq ${i}_1.fastq
             mv ${i}.sra_2.fastq ${i}_2.fastq
             pigz ${i}_1.fastq
@@ -99,10 +168,12 @@ for i in *R1_001.fastq.gz; do
         continue
     else
         echo "LYVESET CONTAINER RUNNING SHUFFLEREADS.PL"
+        print_next_command $LINENO ${b}
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_shuffleReads.pl /data/${b}"_R1_001.fastq.gz" /data/${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
+        print_next_command $LINENO ${b}
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_trimClean.pl --numcpus ${THREADS} -o /data/clean/${b}.cleaned.fastq.gz -i /data/clean/${b}.fastq --nosingletons;
         remove_file clean/${b}.fastq;
@@ -115,9 +186,11 @@ if [ -s "SRR" ]; then
             continue
         else
             echo "(run_assembly_shuffleReads.pl)Interleaving reads for:"${c}" using lyveset docker container"
+            print_next_command $LINENO ${c}
             docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_shuffleReads.pl /data/${c}"_1.fastq.gz" /data/${c}"_2.fastq.gz" > clean/${c}.fastq;
             echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container";
+            print_next_command $LINENO ${c}
             docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
             run_assembly_trimClean.pl --numcpus ${THREADS} -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
             remove_file clean/${c}.fastq;
@@ -147,9 +220,11 @@ for i in ${id[@]}; do
         # export variable i to make it available to container
         export i
         echo "variable i is set to:"${i}
+        print_next_command $LINENO ${i}
         docker run -e i -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken --preload --threads ${THREADS} --db /kraken-database/minikraken_20171013_4GB --gzip-compressed --fastq-input /data/clean/*${i}*.cleaned.fastq.gz > /data/kraken_output/${i}/kraken.output';
         echo "Running second Kraken command: kraken-report"
+        print_next_command $LINENO ${i}
         docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/kraken:1.0 /bin/bash -c \
         'kraken-report --db /kraken-database/minikraken_20171013_4GB --show-zeros /data/kraken_output/${i}/kraken.output > /data/kraken_output/${i}/kraken.results';
     fi
@@ -170,6 +245,7 @@ for i in ${id[@]}; do
 	else
 		export SEQUENCE_LEN
                 echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
+                print_next_command $LINENO
                 docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
 		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
 	fi
@@ -186,6 +262,7 @@ for i in ${id[@]}; do
         # exporting `i` variable to make it available to the docker container
         export i
         echo "i is set to:"$i
+        print_next_command $LINENO
         docker run -e i -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/spades:3.12.0 /bin/bash -c \
         'spades.py --pe1-12 /data/clean/*$i*.cleaned.fastq.gz -t ${THREADS} --careful -o /data/spades_assembly_trim/${i}/'
         rm -rf ./spades_assembly_trim/$i/corrected \
@@ -221,6 +298,7 @@ done
 #        # exporting `i` variable to make it available to the docker container
 #        export i
 #        echo "i is set to:"$i" , running shovill (spades) now...."
+#        print_next_command $LINENO
 #        docker run -e i --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/shovill:1.0.4 /bin/bash -c \
 #        'shovill --outdir /data/shovill/${i}/ --R1 /data/*${i}*_1.fastq.gz --R2 /data/*${i}*_2.fastq.gz --ram 29 --cpus 0'
 #    fi
@@ -232,6 +310,7 @@ for i in ${id[@]}; do
      if [[ -n "$(find -path ./quast/${i}_output_file 2>/dev/null)" ]]; then
         echo "Skipping "$i". It's spades assembly has already been QUASTed."
     else
+        print_next_command $LINENO
     	docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
     	quast.py --fast -t ${THREADS} /data/spades_assembly_trim/$i/contigs.fasta -o /data/quast/$i
     fi
@@ -243,8 +322,9 @@ done
 #    if [[ -n "$(find -path ./quast-shovill/${i}_output_file 2>/dev/null)" ]]; then
 #        echo "Skipping "$i". It's shovill assembly has already been QUASTed."
 #    else
-#    	docker run -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
-#    	quast.py --fast -t ${THREADS} /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
+#        print_next_command $LINENO
+#    	 docker run -e THREADS --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/quast:5.0.0 \
+#    	 quast.py --fast -t ${THREADS} /data/shovill/$i/contigs.fa -o /data/quast-shovill/$i
 #    fi
 #done
 
@@ -276,10 +356,12 @@ for i in ${id[@]}; do
     else
         export i
         echo "variable i is set to:"${i}
+        print_next_command $LINENO
         docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash sketch -p ${THREADS} /data/clean/*${i}*.cleaned.fastq.gz'
         mv ./clean/*${i}*.cleaned.fastq.gz.msh ./mash/
         echo "running mash dist in container, variable i set to:"${i}
+        print_next_command $LINENO
         docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/mash:2.1 /bin/bash -c \
         'mash dist -p ${THREADS} /db/RefSeqSketchesDefaults.msh /data/mash/*${i}*.fastq.gz.msh > /data/mash/${i}_distance.tab'
         sort -gk3 mash/${i}_distance.tab -o mash/${i}_distance.tab
@@ -289,7 +371,7 @@ for i in ${id[@]}; do
 done
 
 ##### Create list of samples and how they were identified by MASH (E. coli or Salmonella) #####  #PROBLEM: The classifications aren't always the species name, they are sometimes just identifiers...
-#Thanks to Kevin Libuit of DGS Virginia for the frame work of the following code for MASH, serotypeFinder and SeqSero.
+#Thanks to Kevin Libuit of DCLS Virginia for the frame work of the following code for MASH, serotypeFinder and SeqSero.
 make_directory ./mash/sample_id
 echo "sep=;"  > ./mash/sample_id/raw.csv && echo "Sample; MASH-ID; P-value" >> ./mash/sample_id/raw.csv
 for i in ${id[@]}; do
@@ -316,6 +398,7 @@ for i in $ecoli_isolates; do
         export i
         echo "variable i is set to:"${i}
         # Run serotypeFinder for all Ecoli isolates and output to serotypeFinder_output/<sample_name>
+        print_next_command $LINENO
         docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/serotypefinder:1.1 /bin/bash -c \
         'serotypefinder.pl -d /serotypefinder/database -i /data/spades_assembly_trim/${i}/contigs.fasta -b /opt/blast-2.2.26  -o /data/serotypeFinder_output/${i} -s ecoli -k 95.00 -l 0.60'
     fi
@@ -347,6 +430,7 @@ for i in $sal_isolates; do
         if (find ./*$i*_[1,2]*fastq.gz); then
             export i
             echo "variable i is set to:"${i}
+            print_next_command $LINENO
             docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero:1.0.1 /bin/bash -c \
             'SeqSero.py -m2 -i /data/*${i}*_[1,2]*fastq.gz'
             make_directory ./SeqSero_output/$i
@@ -355,6 +439,7 @@ for i in $sal_isolates; do
         elif (find ./*$i*R[1,2]*fastq.gz); then
             export i
             echo "variable i is set to:"${i}
+            print_next_command $LINENO
             docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/seqsero:1.0.1 /bin/bash -c \
             'SeqSero.py -m2 -i /data/*${i}*R[1,2]*fastq.gz'
             make_directory ./SeqSero_output/$i
@@ -368,6 +453,7 @@ for i in $sal_isolates; do
     if [[ -n "$(find -path ./sistr/${i}_sistr-results.tab)" ]]; then
         echo "${i} has a SISTR (file)."
     else
+        print_next_command $LINENO
         docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sistr:1.0.2 \
         sistr -i /data/spades_assembly_trim/$i/contigs.fasta ${i} -t ${THREADS} -f tab -o /data/sistr/${i}_sistr-results
     fi
@@ -398,12 +484,14 @@ for y in ${databases[@]}; do
     else
         for i in ${id[@]}; do
 	    export i
+            print_next_command $LINENO
             docker run -e y -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
             'abricate --threads ${THREADS} -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
         done
     fi
     export y
     echo "variable y is set to:"${y}
+    print_next_command $LINENO
     docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
     'abricate --summary /data/abricate/*_${y}.tab > /data/abricate/summary/${y}_summary'
 done
@@ -463,6 +551,7 @@ for i in ${id[@]}; do
         mv *$i*fastq.gz fastq_files
     fi
 done
-echo "********************************"
-echo "type_pipe pipeline has finished."
-echo "********************************"
+todays_date=$(date)
+echo "*******************************************************************"
+echo "type_pipe pipeline has finished on "$todays_date"."
+echo "*******************************************************************"
