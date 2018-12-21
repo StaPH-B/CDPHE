@@ -270,23 +270,6 @@ for i in ${id[@]}; do
     head -10 ./kraken_output/$i/kraken_species.results >> ./kraken_output/top_kraken_species_results;
 done
 
-<<<<<<< HEAD
-##### Run Quality and Coverage Metrics #####
-## check to see if the run quality and coverage metrics have already been completed or not
-for i in ${id[@]}; do
-    if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
-		echo 'Run quality and coverage metrics have been generated'
-	else
-		export SEQUENCE_LEN
-                echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-                print_next_command $LINENO
-                docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
-		'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
-	fi
-done
-=======
->>>>>>> db57cfadcda2fa086378dec57c22175e9b6887a0
-
 ##### Run SPAdes de novo genome assembler on all cleaned, trimmed, fastq files #####
 make_directory ./spades_assembly_trim
 for i in ${id[@]}; do
