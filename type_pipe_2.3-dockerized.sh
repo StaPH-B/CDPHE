@@ -130,8 +130,6 @@ echo "Now checking to see if all necessary docker images are downloaded..."
 docker_image_check staphb/sratoolkit:2.9.2
 docker_image_check staphb/lyveset:2.0.1
 docker_image_check staphb/kraken:1.0
-docker_image_check staphb/lyveset:2.0.1
-docker_image_check staphb/spades:3.12.0
 docker_image_check staphb/spades:3.12.0
 docker_image_check staphb/mash:2.1
 docker_image_check staphb/serotypefinder:1.1
@@ -140,7 +138,6 @@ docker_image_check staphb/sistr:1.0.2
 docker_image_check staphb/abricate:0.8.7
 docker_image_check staphb/bwa:0.7.17
 docker_image_check staphb/samtools:1.9
-
 
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
 if [[ -e ./fastq_files ]]; then

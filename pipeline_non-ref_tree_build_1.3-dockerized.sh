@@ -26,9 +26,34 @@ THREADS=$(nproc --all)
 echo "Number of threads set to: $THREADS"
 export THREADS
 
+##### Check to see if docker is installed #####
+if [ -z $(which docker) ]; then
+   echo 'Docker is not installed, Please see https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce for instructions on how to install Docker. Now exiting.'
+   exit
+else
+    echo "$(docker --version) is installed."
+fi
+
+##### Function and check to see if Docker images are downloaded, if not, download them with docker pull #####
+docker_image_check () {
+if [ -z $(docker images -q $1) ]; then
+    docker pull $1
+else
+    echo "Docker image $1 already exists locally."
+fi
+}
+# gotta check em all! gotta check em all! Dock-er-mon!
+echo 'Now checking to see if all necessary docker images are downloaded...'
+docker_image_check staphb/sratoolkit:2.9.2
+docker_image_check staphb/lyveset:2.0.1
+docker_image_check staphb/spades:3.12.0
+docker_image_check staphb/quast:5.0.0
+docker_image_check staphb/prokka:1.13.3
+docker_image_check staphb/roary:3.12.0
+
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
-if [[ -n "$(find ./fastq_files)" ]]; then
-    echo "Moving fastq files from ./fastq_files to ./ (top-level DIR)"
+if [[ -e ./fastq_files ]]; then
+    echo 'Moving fastq files from ./fastq_files to ./ (top-level DIR)'
     mv ./fastq_files/* .
     rm -rf ./fastq_files
 fi
@@ -95,10 +120,10 @@ for i in *_1.fastq.gz; do
     if find ./clean/${b}.cleaned.fastq.gz; then
         continue
     else
-        echo "(run_assembly_shuffleReads.pl)Interleaving reads for:"${c}" using lyveset docker container"
+        echo '(run_assembly_shuffleReads.pl)Interleaving reads for:'${c}' using lyveset docker container'
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_shuffleReads.pl /data/${b}"_1.fastq.gz" /data/${b}"_2.fastq.gz" > clean/${b}.fastq;
-        echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container"
+        echo '(run_assembly_trimClean.pl) Trimming/cleaning reads for:'${c}' using lyveset docker container'
         docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
         run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons --numcpus ${THREADS};
         remove_file clean/${b}.fastq;
@@ -195,7 +220,7 @@ docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/r
 'roary -p ${THREADS} -e -n -v -f /data/roary /data/gff_files/*.gff'
 
 ##### Run raxml on the roary alignment to generate a tree #####
-docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:2.0.1-test /bin/bash -c \
+docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:2.0.1 /bin/bash -c \
 'raxmlHPC -m GTRGAMMA -p 12345 -x 12345 -s /data/roary/core_gene_alignment.aln -# 100 -n phylo_output -f a'
 rm -rf raxml/
 make_directory raxml
