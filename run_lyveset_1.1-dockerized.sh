@@ -20,7 +20,7 @@ export THREADS
 
 ##### Check to see if docker is installed #####
 if [ -z $(which docker) ]; then
-   echo "Docker is not installed, Please see https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce for instruc$
+   echo 'Docker is not installed, Please see https://github.com/StaPH-B/scripts/blob/master/image-information.md#docker-ce for instrucions on how to install Docker. Now exiting.'
    exit
 else
     echo "$(docker --version) is installed."
