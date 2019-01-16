@@ -48,7 +48,7 @@ docker_image_check staphb/sratoolkit:2.9.2
 docker_image_check staphb/lyveset:2.0.1
 docker_image_check staphb/spades:3.12.0
 docker_image_check staphb/quast:5.0.0
-docker_image_check staphb/prokka:1.13.3
+docker_image_check staphb/prokka:1.13
 docker_image_check staphb/roary:3.12.0
 
 ##### Move all fastq files from fastq_files directory up one directory, remove fastq_files folder #####
@@ -205,7 +205,7 @@ for i in ${id[@]}; do
     else
         export i
         echo "Prokka will now be run on "$i
-        docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/prokka:1.13.3 /bin/bash -c \
+        docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/prokka:1.13 /bin/bash -c \
         'prokka /data/spades_assembly_trim/$i/contigs.fasta --outdir /data/prokka/$i --prefix $i --cpus ${THREADS}'
     fi
 done
