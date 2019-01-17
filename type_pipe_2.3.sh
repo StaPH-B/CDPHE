@@ -17,13 +17,13 @@ do
 done
 
 #This function will check if the file exists before trying to remove it
-remove_file () {
+remove_file() {
     if [ -e $1 ];then
         rm -rf $1
     fi
 }
 #This function will check to make sure the directory doesn't already exist before trying to create it
-make_directory () {
+make_directory() {
     if [ -e $1 ]; then
         echo "Directory "$1" already exists"
     else
@@ -63,17 +63,15 @@ echo ${id[@]}
 remove_file tmp
 
 ##### Fetch and fastq-dump all reads from NCBI identified by "SRR" #####
-for i in ${id[@]}; do
-    if [[ $i =~ "SRR" ]]; then
-        echo $i
-        if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
-            echo "Files are here."
-        else
-            echo 'prefetching '$i'...'
-            prefetch $i
-            echo 'Creating read files for '$i'...'
-            fastq-dump --gzip --skip-technical --dumpbase --split-files --clip $i
-        fi
+for i in ${srr[@]}; do
+    echo $i
+    if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
+        echo "Files are here."
+    else
+        echo 'prefetching '$i'...'
+        prefetch $i
+        echo 'Creating read files for '$i'...'
+        fastq-dump --gzip --skip-technical --dumpbase --split-files --clip $i
     fi
 done
 
