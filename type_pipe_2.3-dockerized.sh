@@ -164,27 +164,25 @@ echo ${id[@]}
 remove_file tmp
 
 ##### Fetch and fastq-dump all reads from NCBI identified by "SRR" #####
-for i in ${id[@]}; do
-    if [[ $i =~ "SRR" ]]; then
-        echo $i
-        if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
-            echo "Files are here."
-        else
-            export i
-            echo 'prefetching '$i'...'
-            print_next_command $LINENO ${i}
-            docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
-            'prefetch -O /data '${i}
-            echo 'now running fasterq-dump in container'
-            print_next_command $LINENO ${i}
-            docker run -e THREADS -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
-            'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e ${THREADS} -p '${i}'.sra'
-            mv ${i}.sra_1.fastq ${i}_1.fastq
-            mv ${i}.sra_2.fastq ${i}_2.fastq
-            pigz ${i}_1.fastq
-            pigz ${i}_2.fastq
-            rm ${i}.sra
-        fi
+for i in ${srr[@]}; do
+    echo $i
+    if [[ -n "$(find *$i* 2>/dev/null)" ]]; then
+        echo "Files are here."
+    else
+        export i
+        echo 'prefetching '$i'...'
+        print_next_command $LINENO ${i}
+        docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+        'prefetch -O /data '${i}
+        echo 'now running fasterq-dump in container'
+        print_next_command $LINENO ${i}
+        docker run -e THREADS -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/sratoolkit:2.9.2 /bin/bash -c \
+        'fasterq-dump --skip-technical --split-files -t /data/tmp-dir -e ${THREADS} -p '${i}'.sra'
+        mv ${i}.sra_1.fastq ${i}_1.fastq
+        mv ${i}.sra_2.fastq ${i}_2.fastq
+        pigz ${i}_1.fastq
+        pigz ${i}_2.fastq
+        rm ${i}.sra
     fi
 done
 remove_file tmp-dir
