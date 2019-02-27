@@ -103,12 +103,12 @@ conda-deactivate () {
 #    ├── bc01-SRR4342906
 
 THREADS=$(nproc --all)
+export THREADS
 echo "Number of threads set to: $THREADS"
-
 
 remove_file tmp1
 # find all files with _1.fastq in it and make a list of SRR identifiers in a file called "tmp1"
-find clean-ilmn-reads/ -maxdepth 1 -name '*_1.fastq*' |cut -d '_' -f 1 |cut -d '/' -f 2 |cut -d '.' -f 1 >tmp1
+find chopped-debarcoded-reads/ -maxdepth 1 -name 'BC*.fastq.gz*' |cut -d '_' -f 1 |cut -d '/' -f 2 |cut -d '.' -f 1 >tmp1
 declare -a tmp=()
 tmp1='tmp1'
 tmpfile=`cat $tmp1`
@@ -119,20 +119,20 @@ id=("${tmp[@]}" "${srr[@]}") #Combine the automatically generated list with the 
 id=($(printf "%s\n" "${id[@]}"|sort -u)) #Get all unique values and output them to an array
 echo ${id[@]}
 
-
-# Nanoplot - first get summary of everything about raw basecalled reads, then for of each of the barcodes broken down
-if [[ -e ./fast5/nanoplot-ouput-combined-seq-summary/ ]]; then
-        echo "Skipping NanoPlotting of raw, basecalled reads, since sequencing_summary_combined.txt.gz exists."
-    else
-        # Nanoplot is currently installed in a conda environment, via pip, so this is required to turn on the environment
-        conda-activate nanoplot-env
-        # produce Nanoplot output on all reads, displaying read N50 line and log-transformed graphs
-        NanoPlot --summary fast5/sequencing_summary_combined.txt.gz -t ${THREADS} --loglength --N50 -o fast5/nanoplot-ouput-combined-seq-summary
-        # produce Nanoplot output per barcode
-        NanoPlot --summary fast5/sequencing_summary_combined.txt.gz -t ${THREADS} --N50 --loglength --barcoded -o fast5/per-barcode-nanoplot-ouput-combined-seq-summary
-        # deactivate conda env
-        conda-deactivate
-fi
+# commented out temporarily - CJK 2/27/19
+## Nanoplot - first get summary of everything about raw basecalled reads, then for of each of the barcodes broken down
+#if [[ -e ./fast5/nanoplot-ouput-combined-seq-summary/ ]]; then
+#        echo "Skipping NanoPlotting of raw, basecalled reads, since sequencing_summary_combined.txt.gz exists."
+#    else
+#        # Nanoplot is currently installed in a conda environment, via pip, so this is required to turn on the environment
+#        conda-activate nanoplot-env
+#        # produce Nanoplot output on all reads, displaying read N50 line and log-transformed graphs
+#        NanoPlot --summary fast5/sequencing_summary_combined.txt.gz -t ${THREADS} --loglength --N50 -o fast5/nanoplot-ouput-combined-seq-summary
+#        # produce Nanoplot output per barcode
+#        NanoPlot --summary fast5/sequencing_summary_combined.txt.gz -t ${THREADS} --N50 --loglength --barcoded -o fast5/per-barcode-nanoplot-ouput-combined-seq-summary
+#        # deactivate conda env
+#        conda-deactivate
+#fi
 
 # Porechop
 
@@ -150,21 +150,27 @@ make_directory prokka
 declare -a assemblylist=()
 # for all unicycler produced assembliy.fasta files that exist, run prokka if it hasn't been run yet
 # find all assembly.fasta files in /unicycler-assemblies , put into an array 'assemblylist'
-for i in ./*/bc*/*/assembly.fasta; do
+# i variable is the full path to *.contigs.fasta file
+for i in canu-assemblies/BC*/*.contigs.fasta; do
     echo "i is set to ${i} , adding to assemblylist array."
     assemblylist=("${assemblylist[@]}" "${i}")
+    echo "assemblylist is set to:${assemblylist[@]}"
     # create a temp_var variable and shorten the name, so that it can be used as a prefix in Prokka
     # when creating the name for unicycler output DIR, make sure that you specify the nanopore and ILMN reads used and DO NOT use an underscore
     ##example: unicycler -o unicycler-assemblies/bc01-SRR11111111/fourth-try-bold-mode-on
     ##example: unicycler -o unicycler-assemblies/bc03-05-06-SRR5192920/sixth-try-normal-mode
+    # temp_var is just the file name like Koxytoca.contigs.fasta
     temp_var=$(echo ${i} | cut -d '/' -f 3,4| sed -r 's/[/]+/_/g')
     echo "temp_var is set to:${temp_var}"
     # check to see if prokka DIR exists, if so skip, if not, run prokka
     if [ -e ./prokka/${temp_var} ]; then
         echo "Prokka has been run on ${temp_var} , Skipping."
     else
+        make_directory prokka/${temp_var}
         echo "Prokka will now be run on :"${temp_var}
-        prokka $i --outdir prokka/${temp_var} --prefix ${temp_var} --cpus ${THREADS} 
+        export i temp_var
+        docker run -e i -e temp_var -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/prokka:1.13 /bin/bash -c \
+        'prokka /data/${i} --outdir /data/prokka/${temp_var} --prefix ${temp_var} --cpus ${THREADS} --force'
     fi
 done
 
@@ -182,5 +188,5 @@ done
 #    fi
 #done
 
-# remove lingering tmp1 file
-remove_file tmp1
+## remove lingering tmp1 file
+#remove_file tmp1
