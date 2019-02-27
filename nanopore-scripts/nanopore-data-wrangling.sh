@@ -174,6 +174,41 @@ for i in canu-assemblies/BC*/*.contigs.fasta; do
     fi
 done
 
+## Abricate on all canu-assemblies
+# set abricate_db_path in container. Must run as root to prevent permission errors
+abricate_db_path=$(docker run --rm=True -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c 'find / -path "/abricate*/db"')
+echo "abricate_db_path is set to:${abricate_db_path}"
+export abricate_db_path
+# set list of db's into a variable
+databases=$(docker run -e abricate_db_path -e databases --rm=True -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c 'for i in $abricate_db_path/*; do b=`basename $i $abricate_db_path/`; databases+=("$b"); done; echo ${databases[@]}; export databases')
+# convert the list of db's into an array
+read -a db_array <<< ${databases}
+echo "abricate db_array is set to:${db_array[@]}"
+
+make_directory abricate
+make_directory abricate/summary
+for y in ${db_array[@]}; do
+    if [[ -n "$(find -path ./abricate/summary/${y}_summary)" ]]; then
+        echo "Abricate kadabricate! ${y} has been run"
+        continue
+    else
+        for i in canu-assemblies/BC*/*.contigs.fasta; do
+	    export i
+            temp_var=$(echo ${i} | cut -d '/' -f 3,4| sed -r 's/[/]+/_/g')
+            export temp_var
+            echo "temp_var is set to:${temp_var}"
+            docker run -e temp_var -e y -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+            'abricate --threads ${THREADS} -db ${y} /data/${i} > /data/abricate/${temp_var}_${y}.tab'
+        done
+    fi
+    export y
+    echo "variable y is set to:"${y}
+    docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+    'abricate --summary /data/abricate/*_${y}.tab > /data/abricate/summary/${y}_summary'
+done
+echo 'FINISHED RUNNING ABRICATE'
+
+
 #echo ${assemblylist[@]}
 
 # Prokka - untested - needs to be fixed
