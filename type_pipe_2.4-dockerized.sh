@@ -481,7 +481,7 @@ for i in $ecoli_isolates; do
         # Run serotypeFinder for all Ecoli isolates and output to serotypeFinder_output/<sample_name>
         print_next_command $LINENO
         docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/serotypefinder:1.1 /bin/bash -c \
-        'serotypefinder.pl -d /serotypefinder/database -i /data/spades_assembly_trim/${i}/contigs.fasta -b /opt/blast-2.2.26  -o /data/serotypeFinder_output/${i} -s ecoli -k 95.00 -l 0.60'
+        'serotypefinder.pl -d /serotypefinder/database -i /data/spades_assembly_trim/${i}/contigs.fasta -b /blast-2.2.26  -o /data/serotypeFinder_output/${i} -s ecoli -k 95.00 -l 0.60'
     fi
     # Copy serotypeFinder's predicted serotype
     o_type="$(awk -F $'\t' 'FNR == 7 {print $6}' ./serotypeFinder_output/${i}/results_table.txt)"
