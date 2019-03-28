@@ -105,7 +105,12 @@ if [ -z "$SEQUENCE_LEN" ]; then
 fi
 echo "Sequence Length: $SEQUENCE_LEN"
 
-THREADS=$(nproc --all)
+#####Number of threads-specific to linux
+#THREADS=$(nproc --all)
+#####Number of threads-specific to Mac
+#sysctl -n hw.ncpu
+#####Number of threads-cross platform
+THREADS=$(python -c 'import multiprocessing as mp; print(mp.cpu_count())')
 echo "Number of threads set to: $THREADS"
 export THREADS
 
