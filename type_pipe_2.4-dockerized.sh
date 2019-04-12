@@ -6,7 +6,7 @@
 
 #Set all the variables that need to be set
 
-version="2.3"
+version="2.4"
 #Print out the line after the current line in the script, and print the evaluation
 #of how it will be executed
 print_next_command() {
