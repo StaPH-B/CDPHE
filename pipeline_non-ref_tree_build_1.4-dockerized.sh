@@ -11,7 +11,7 @@ print_next_command() {
     range=$(($1+1))
     x=0
     while [ $x == 0 ]; do
-        p=$(sed -n ${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        p=$(sed -n ${range}'p' /home/staphb/scripts/pipeline_non-ref_tree_build_$version-dockerized.sh)
         if [[ $p == *\\ ]]; then
             range=$(($range+1))
         else
@@ -19,8 +19,8 @@ print_next_command() {
         fi
     done
     if [[ $range == $current_line ]]; then
-        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-        line_data=$(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/pipeline_non-ref_tree_build_$version-dockerized.sh)
+        line_data=$(sed -n ${current_line}'p' /home/staphb/scripts/pipeline_non-ref_tree_build_$version-dockerized.sh)
         line_data=$(echo $line_data | sed "s/'//g")
         #echo line_data
         output_prefix=''
@@ -32,8 +32,8 @@ print_next_command() {
         eval echo $line_data
         eval echo $output_prefix$end
     else
-        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-        line_data=$(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/pipeline_non-ref_tree_build_$version-dockerized.sh)
+        line_data=$(sed -n ${current_line}','${range}'p' /home/staphb/scripts/pipeline_non-ref_tree_build_$version-dockerized.sh)
         line_data=$(echo $line_data | sed "s/'//g")
         #echo $line_data
         output_prefix=''
