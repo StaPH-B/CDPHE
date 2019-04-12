@@ -3,7 +3,7 @@
 #Usage: script to create a reference free phylogenetic tree from a set of fastq files
 #Permission to copy and modify is granted without warranty of any kind
 
-version="2.4"
+version="1.4"
 #Print out the line after the current line in the script, and print the evaluation
 #of how it will be executed
 print_next_command() {
