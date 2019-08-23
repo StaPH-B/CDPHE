@@ -16,5 +16,5 @@ do
     esac
     shift
 done
-command time -v /home/staphb/scripts/type_pipe_2.4-dockerized.sh -l $SEQUENCE_LEN |& tee logfile.txt
+command time -v /home/staphb/scripts/type_pipe_2.5-dockerized.sh -l $SEQUENCE_LEN |& tee logfile.txt
 
