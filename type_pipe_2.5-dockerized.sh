@@ -6,7 +6,8 @@
 
 #Set all the variables that need to be set
 
-version="2.4"
+version="2.5"
+script_path=$(which type_pipe_$version-dockerized.sh)
 #Print out the line after the current line in the script, and print the evaluation
 #of how it will be executed
 print_next_command() {
@@ -14,7 +15,7 @@ print_next_command() {
     range=$(($1+1))
     x=0
     while [ $x == 0 ]; do
-        p=$(sed -n ${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        p=$(sed -n ${range}'p' $script_path)
         if [[ $p == *\\ ]]; then
             range=$(($range+1))
         else
@@ -22,8 +23,8 @@ print_next_command() {
         fi
     done
     if [[ $range == $current_line ]]; then
-        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-        line_data=$(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        #echo $(sed -n ${current_line}'p' $script_path)
+        line_data=$(sed -n ${current_line}'p' $script_path)
         line_data=$(echo $line_data | sed "s/'//g")
         #echo line_data
         output_prefix=''
@@ -35,8 +36,8 @@ print_next_command() {
         eval echo $line_data
         eval echo $output_prefix$end
     else
-        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-        line_data=$(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+        #echo $(sed -n ${current_line}','${range}'p' $script_path)
+        line_data=$(sed -n ${current_line}','${range}'p' $script_path)
         line_data=$(echo $line_data | sed "s/'//g")
         #echo $line_data
         output_prefix=''
@@ -55,7 +56,7 @@ print_next_command() {
 #    range=$(($1+1))
 #    x=0
 #    while [ $x == 0 ]; do
-#        p=$(sed -n ${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        p=$(sed -n ${range}'p' $script_path)
 #        if [[ $p == *\\ ]]; then
 #            range=$(($range+1))
 #        else
@@ -63,11 +64,11 @@ print_next_command() {
 #        fi
 #    done
 #    if [[ $range == $current_line ]]; then
-#        #echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-#        eval echo $(sed -n ${current_line}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        #echo $(sed -n ${current_line}'p' $script_path)
+#        eval echo $(sed -n ${current_line}'p' $script_path)
 #    else
-#        #echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
-#        eval echo $(sed -n ${current_line}','${range}'p' /home/staphb/scripts/type_pipe_$version-dockerized.sh)
+#        #echo $(sed -n ${current_line}','${range}'p' $script_path)
+#        eval echo $(sed -n ${current_line}','${range}'p' $script_path)
 #    fi
 #}
 
@@ -547,14 +548,14 @@ grep -v "fasta_filepath" ./sistr/sistr_summary_temp >> ./sistr/sistr_summary
 rm ./sistr/sistr_summary_temp
 
 #####This section provides data on the virulence and antibiotic resistance profiles for each isolates, from the databases that make up abricate
-echo 'Setting abricate db PATH'
-abricate_db_path=$(find /home/$USER/ -mount -path "*/abricate*/db")
-echo 'ABRICATE DB PATH SET'
+remove_file databases.tmp
+echo 'Setting abricate dbs'
+docker run --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
+'for i in abricate*/db/*;do echo ${i##*/} >> /data/databases.tmp; done'
 declare -a databases=()
-for i in $abricate_db_path/*;
-    do b=`basename $i $abricate_db_path/`;
-    databases+=("$b");
-done
+while IFS= read -r line; do
+    databases+=("$line");
+done < ./databases.tmp 2>/dev/null
 echo ${databases[@]}
 make_directory abricate
 make_directory abricate/summary
@@ -563,19 +564,22 @@ for y in ${databases[@]}; do
         echo "Abricate kadabricate! ${y} has been run"
         continue
     else
+        echo "variable y is set to:"${y}
         for i in ${id[@]}; do
-	    export i
+            echo "variable i set to: "${i}
+            export i
             print_next_command $LINENO
             docker run -e y -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
             'abricate --threads ${THREADS} -db ${y} /data/spades_assembly_trim/${i}/contigs.fasta > /data/abricate/${i}_${y}.tab'
         done
     fi
     export y
-    echo "variable y is set to:"${y}
+    #echo "variable y is set to:"${y}
     print_next_command $LINENO
     docker run -e y --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/abricate:0.8.7 /bin/bash -c \
     'abricate --summary /data/abricate/*_${y}.tab > /data/abricate/summary/${y}_summary'
 done
+rm databases.tmp
 echo 'FINISHED RUNNING ABRICATE'
 
 #####Create a file with all the relevant run info
@@ -598,6 +602,7 @@ for i in ${id[@]}; do
 #    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
     L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
 #    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+    species=$(grep -A1 $i ./kraken_output/top_kraken_species_results |tail -1 |cut -f 6 |sed -e 's/^[ \t]*//' |sed -e 's/ /_/')
     if [ -z "$contigs" ]; then
          contigs="N/A"
     fi
@@ -613,9 +618,11 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file.tsv
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+    if [ -z "$species" ]; then
+        species="N/A"
+    fi
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50\t$species" >> isolate_info_file.tsv
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50\t$species"
 
     # use these lines if shovill is turned on and you want to compare between SPAdes and shovill-spades outputs
     #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
@@ -642,6 +649,7 @@ for i in ${id[@]}; do
 #    shovill_N50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "N50" |tr -s ' '|cut -d' ' -f2)
     L50=$(tail -9 ./quast/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
 #    shovill_L50=$(tail -9 ./quast-shovill/${i}/report.txt |grep "L50" |tr -s ' '|cut -d' ' -f2)
+    species=$(grep -A1 $i ./kraken_output/top_kraken_species_results |tail -1 |cut -f 6 |sed -e 's/^[ \t]*//' |sed -e 's/ /_/')
     if [ -z "$contigs" ]; then
          contigs="N/A"
     fi
@@ -657,9 +665,11 @@ for i in ${id[@]}; do
     if [ -z "$L50" ]; then
          L50="N/A"
     fi
-
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50" >> isolate_info_file_split-clean.tsv
-    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50"
+    if [ -z "$species" ]; then
+        species="N/A"
+    fi
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50\t$species" >> isolate_info_file_split-clean.tsv
+    echo -e "$qc_metric\t$contigs\t$largest_contig\t$total_length\t$N50\t$L50\t$species"
 
     # use these lines if shovill is turned on and you want to compare between SPAdes and shovill-spades outputs
     #echo -e "$qc_metric\t$contigs\t$shovill_contigs\t$largest_contig\t$shovill_largest_contig\t$total_length\t$shovill_total_length\t$N50\t$shovill_N50\t$L50\t$shovill_L50" >> isolate_info_file.tsv
@@ -680,3 +690,5 @@ todays_date=$(date)
 echo "*******************************************************************"
 echo "type_pipe pipeline has finished on "$todays_date"."
 echo "*******************************************************************"
+    species=$(grep -A1 $i ./kraken_output/top_kraken_species_results |tail -1 |cut -f 6 |sed -e 's/^[ \t]*//' |sed -e 's/ /_/')
+
