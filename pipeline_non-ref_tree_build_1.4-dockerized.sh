@@ -89,7 +89,7 @@ fi
 # gotta check em all! gotta check em all! Dock-er-mon!
 echo 'Now checking to see if all necessary docker images are downloaded...'
 docker_image_check staphb/sratoolkit:2.9.2
-docker_image_check staphb/lyveset:2.0.1
+docker_image_check staphb/lyveset:1.1.4f
 docker_image_check staphb/spades:3.12.0
 docker_image_check staphb/quast:5.0.0
 docker_image_check staphb/prokka:1.13
@@ -152,12 +152,12 @@ for i in *R1_001.fastq.gz; do
     else
         echo "LYVESET CONTAINER RUNNING SHUFFLEREADS.PL"
         print_next_command $LINENO ${i}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_shuffleReads.pl /data/${b}"_R1_001.fastq.gz" /data/${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
         print_next_command $LINENO ${i}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons --numcpus ${THREADS};
         remove_file clean/${b}.fastq;
     fi
@@ -169,11 +169,11 @@ for i in *_1.fastq.gz; do
     else
         echo '(run_assembly_shuffleReads.pl)Interleaving reads for:'${c}' using lyveset docker container'
         print_next_command $LINENO ${i}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_shuffleReads.pl /data/${b}"_1.fastq.gz" /data/${b}"_2.fastq.gz" > clean/${b}.fastq;
         echo '(run_assembly_trimClean.pl) Trimming/cleaning reads for:'${c}' using lyveset docker container'
         print_next_command $LINENO ${i}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_trimClean.pl -i /data/clean/${b}.fastq -o /data/clean/${b}.cleaned.fastq.gz --nosingletons --numcpus ${THREADS};
         remove_file clean/${b}.fastq;
     fi
@@ -275,7 +275,7 @@ docker run -e i -e THREADS --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/r
 
 ##### Run raxml on the roary alignment to generate a tree #####
 print_next_command $LINENO ${i}
-docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:2.0.1 /bin/bash -c \
+docker run -e i --rm=True -u $(id -u):$(id -g) -v $PWD:/data staphb/lyveset:1.1.4f /bin/bash -c \
 'raxmlHPC -m GTRGAMMA -p 12345 -x 12345 -s /data/roary/core_gene_alignment.aln -# 100 -n phylo_output -f a'
 rm -rf raxml/
 make_directory raxml

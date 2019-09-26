@@ -134,7 +134,7 @@ fi
 # gotta check em all! gotta check em all! Dock-er-mon!
 echo "Now checking to see if all necessary docker images are downloaded..."
 docker_image_check staphb/sratoolkit:2.9.2
-docker_image_check staphb/lyveset:2.0.1
+docker_image_check staphb/lyveset:1.1.4f
 docker_image_check staphb/kraken:1.0
 docker_image_check staphb/spades:3.12.0
 docker_image_check staphb/mash:2.1
@@ -203,12 +203,12 @@ for i in *R1_001.fastq.gz; do
     else
         echo "LYVESET CONTAINER RUNNING SHUFFLEREADS.PL"
         print_next_command $LINENO ${b}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_shuffleReads.pl /data/${b}"_R1_001.fastq.gz" /data/${b}"_R2_001.fastq.gz" > clean/${b}.fastq;
         echo ${b};
         echo "LYVESET CONTAINER RUNNING TRIMCLEAN.PL"
         print_next_command $LINENO ${b}
-        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+        docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
         run_assembly_trimClean.pl --numcpus ${THREADS} -o /data/clean/${b}.cleaned.fastq.gz -i /data/clean/${b}.fastq --nosingletons;
         remove_file clean/${b}.fastq;
     fi
@@ -221,11 +221,11 @@ if [ -s "SRR" ]; then
         else
             echo "(run_assembly_shuffleReads.pl)Interleaving reads for:"${c}" using lyveset docker container"
             print_next_command $LINENO ${c}
-            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
             run_assembly_shuffleReads.pl /data/${c}"_1.fastq.gz" /data/${c}"_2.fastq.gz" > clean/${c}.fastq;
             echo "(run_assembly_trimClean.pl) Trimming/cleaning reads for:"${c}" using lyveset docker container";
             print_next_command $LINENO ${c}
-            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 \
+            docker run --rm=True -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f \
             run_assembly_trimClean.pl --numcpus ${THREADS} -i /data/clean/${c}.fastq -o /data/clean/${c}.cleaned.fastq.gz --nosingletons;
             remove_file clean/${c}.fastq;
         fi
@@ -310,7 +310,7 @@ for i in ${id[@]}; do
     else
         export i
         echo "SPLITTING CLEANED READS FOR ${i}"
-        docker run --rm=True -e i -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+        docker run --rm=True -e i -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f /bin/bash -c \
         'run_assembly_shuffleReads.pl -d /data/clean/${i}*.cleaned.fastq.gz -gz 1> /data/split-clean/${i}.cleaned_R1.fastq.gz 2> /data/split-clean/${i}.cleaned_R2.fastq.gz'
     fi
 done
@@ -346,7 +346,7 @@ if [[ -n "$(find -path ./clean/readMetrics.tsv 2>/dev/null)" ]]; then
 else
     export SEQUENCE_LEN
     echo 'Running run_assembly_readMetrics.pl and generating readMetrics.tsv'
-    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f /bin/bash -c \
     'run_assembly_readMetrics.pl /data/clean/*.fastq.gz --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN"'| sort -k3,3n > ./clean/readMetrics.tsv
 fi
 
@@ -357,7 +357,7 @@ if [[ -n "$(find -path ./split-clean/readMetrics.tsv 2>/dev/null)" ]]; then
 else
     export SEQUENCE_LEN
     echo "Running run_assembly_readMetrics.pl on BAMs and generating split-clean/readMetrics.tsv"
-    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:2.0.1 /bin/bash -c \
+    docker run --rm=True -e SEQUENCE_LEN -e THREADS -v $PWD:/data -u $(id -u):$(id -g) staphb/lyveset:1.1.4f /bin/bash -c \
     'run_assembly_readMetrics.pl --fast --numcpus ${THREADS} -e "$SEQUENCE_LEN" /data/bwa/*.alignment.sorted.bam'| sort -k3,3n > ./split-clean/readMetrics.tsv
 fi
 
